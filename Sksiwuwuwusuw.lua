@@ -576,11 +576,6 @@ local function StartBhop()
         if not hum or not root then return end
 
         local state = hum:GetState()
-        local spaceHeld = IsMobile or UserInputService:IsKeyDown(Enum.KeyCode.Space)
-
-        if spaceHeld and (state == Enum.HumanoidStateType.Landed or state == Enum.HumanoidStateType.Running) then
-            hum:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
 
         if state == Enum.HumanoidStateType.Freefall or state == Enum.HumanoidStateType.Jumping then
             local speed = Options.BhopSpeed and Options.BhopSpeed.Value or 30
@@ -606,19 +601,54 @@ local function StartBhop()
 end
 StartBhop()
 
-RunService.RenderStepped:Connect(function()
+local AntiAimAngle = 0
+
+RunService.RenderStepped:Connect(function(dt)
     RenderESP()
     RenderFOV()
     AimbotStep()
 
     local char = LocalPlayer.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local hum = char and FindFirstChildOfClass(char, "Humanoid")
     if hum then
         if Toggles.WalkSpeedEnabled and Toggles.WalkSpeedEnabled.Value then
             hum.WalkSpeed = Options.WalkSpeed and Options.WalkSpeed.Value or 16
         end
         if Toggles.JumpPowerEnabled and Toggles.JumpPowerEnabled.Value then
             hum.JumpPower = Options.JumpPower and Options.JumpPower.Value or 50
+        end
+    end
+
+    if Toggles.ThirdPerson and Toggles.ThirdPerson.Value then
+        local dist = Options.ThirdPersonDist and Options.ThirdPersonDist.Value or 10
+        LocalPlayer.CameraMaxZoomDistance = dist
+        LocalPlayer.CameraMinZoomDistance = dist
+    else
+        LocalPlayer.CameraMaxZoomDistance = 400
+        LocalPlayer.CameraMinZoomDistance = 0.5
+    end
+
+    if Toggles.AntiAimEnabled and Toggles.AntiAimEnabled.Value then
+        local c = LocalPlayer.Character
+        local root = c and FindFirstChild(c, "HumanoidRootPart")
+        if root then
+            local mode = Options.AntiAimMode and Options.AntiAimMode.Value or "Spin"
+            if mode == "Spin" then
+                local spd = Options.AntiAimSpeed and Options.AntiAimSpeed.Value or 360
+                AntiAimAngle = (AntiAimAngle + spd * dt) % 360
+                root.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, math.rad(AntiAimAngle), 0)
+            elseif mode == "Jitter" then
+                local j = (tick() % 0.06 < 0.03) and 180 or 0
+                root.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, math.rad(j), 0)
+            elseif mode == "180°" then
+                local lv = Camera.CFrame.LookVector
+                local a = math.atan2(lv.X, lv.Z) + math.pi
+                root.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, a, 0)
+            elseif mode == "Sideways" then
+                local lv = Camera.CFrame.LookVector
+                local a = math.atan2(lv.X, lv.Z) + math.pi / 2
+                root.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, a, 0)
+            end
         end
     end
 end)
@@ -869,6 +899,22 @@ VisualLeft:AddSlider("MaxESPDistance", {
     Default = 1000,
     Min = 50,
     Max = 3000,
+    Rounding = 0,
+    Suffix = " studs",
+})
+
+local VisualLeft2 = Tabs.Visual:AddLeftGroupbox("Camera", "camera")
+
+VisualLeft2:AddToggle("ThirdPerson", {
+    Text = "Third Person",
+    Default = false,
+})
+
+VisualLeft2:AddSlider("ThirdPersonDist", {
+    Text = "Camera Distance",
+    Default = 10,
+    Min = 4,
+    Max = 50,
     Rounding = 0,
     Suffix = " studs",
 })
@@ -1142,6 +1188,28 @@ MovRight:AddLabel("WASD + Space / Ctrl to fly.\nWorks on Mobile (virtual joystic
 
 local MiscLeft = Tabs.Misc:AddLeftGroupbox("General", "tool")
 local MiscRight = Tabs.Misc:AddRightGroupbox("Notifications", "bell")
+local MiscRight2 = Tabs.Misc:AddRightGroupbox("Anti-Aim", "shield")
+
+MiscRight2:AddToggle("AntiAimEnabled", {
+    Text = "Anti-Aim",
+    Default = false,
+    Risky = true,
+})
+
+MiscRight2:AddDropdown("AntiAimMode", {
+    Values = { "Spin", "Jitter", "180°", "Sideways" },
+    Default = "Spin",
+    Text = "Mode",
+})
+
+MiscRight2:AddSlider("AntiAimSpeed", {
+    Text = "Spin Speed",
+    Default = 360,
+    Min = 30,
+    Max = 1440,
+    Rounding = 0,
+    Suffix = "°/s",
+})
 
 MiscLeft:AddToggle("AntiAFK", {
     Text = "Anti-AFK",
