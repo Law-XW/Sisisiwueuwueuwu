@@ -9,8 +9,8 @@ local Toggles = Library.Toggles
 Library.ShowToggleFrameInKeybinds = true
 
 local Window = Library:CreateWindow({
-    Title = "Script",
-    Footer = "v1.0",
+    Title = "CounterBlox",
+    Footer = "Xeioa",
     NotifySide = "Right",
     ShowCustomCursor = true,
     MobileButtonsSide = "Right",
@@ -572,12 +572,35 @@ local function StartBhop()
         local char = LocalPlayer.Character
         if not char then return end
         local hum = FindFirstChildOfClass(char, "Humanoid")
-        if not hum then return end
-        local holding = IsMobile or UserInputService:IsKeyDown(Enum.KeyCode.Space)
-        if not holding then return end
+        local root = FindFirstChild(char, "HumanoidRootPart")
+        if not hum or not root then return end
+
         local state = hum:GetState()
-        if state == Enum.HumanoidStateType.Landed or state == Enum.HumanoidStateType.Running then
+        local spaceHeld = IsMobile or UserInputService:IsKeyDown(Enum.KeyCode.Space)
+
+        if spaceHeld and (state == Enum.HumanoidStateType.Landed or state == Enum.HumanoidStateType.Running) then
             hum:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+
+        if state == Enum.HumanoidStateType.Freefall or state == Enum.HumanoidStateType.Jumping then
+            local speed = Options.BhopSpeed and Options.BhopSpeed.Value or 30
+            local cf = Camera.CFrame
+            local moveDir = Vector3.zero
+
+            if IsMobile then
+                moveDir = hum.MoveDirection
+            else
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cf.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cf.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cf.RightVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cf.RightVector end
+            end
+
+            if moveDir.Magnitude > 0 then
+                local flat = Vector3.new(moveDir.X, 0, moveDir.Z).Unit
+                local vel = root.AssemblyLinearVelocity
+                root.AssemblyLinearVelocity = Vector3.new(flat.X * speed, vel.Y, flat.Z * speed)
+            end
         end
     end)
 end
@@ -906,9 +929,30 @@ VisualRight:AddSlider("CrosshairRotation", {
     Text = "Rotation",
     Default = 0,
     Min = 0,
-    Max = 180,
+    Max = 360,
     Rounding = 0,
     Suffix = "°",
+})
+
+VisualRight:AddToggle("CrosshairSpin", {
+    Text = "Auto-Rotate (Spin)",
+    Default = false,
+})
+
+VisualRight:AddSlider("CrosshairSpinSpeed", {
+    Text = "Spin Speed",
+    Default = 90,
+    Min = 5,
+    Max = 720,
+    Rounding = 0,
+    Suffix = "°/s",
+})
+
+VisualRight:AddDivider()
+
+VisualRight:AddToggle("CrosshairLabel", {
+    Text = "Label under Crosshair",
+    Default = false,
 })
 
 VisualRight:AddToggle("CrosshairOutline", {
@@ -926,36 +970,50 @@ VisualRight:AddLabel("Outline Color"):AddColorPicker("CrosshairOutlineColor", {
     Title = "Crosshair Outline Color",
 })
 
-local CH = { Lines = {}, Outlines = {} }
+local CH = { Lines = {}, Outlines = {}, SpinAngle = 0 }
 for i = 1, 4 do
     local l = Drawing.new("Line"); l.Visible = false; l.Thickness = 1
     local o = Drawing.new("Line"); o.Visible = false; o.Thickness = 3
     CH.Lines[i] = l; CH.Outlines[i] = o
 end
-CH.Dot        = Drawing.new("Circle"); CH.Dot.Filled = true;  CH.Dot.Visible = false;  CH.Dot.NumSides = 32
-CH.DotOut     = Drawing.new("Circle"); CH.DotOut.Filled = true;  CH.DotOut.Visible = false; CH.DotOut.NumSides = 32
-CH.Ring       = Drawing.new("Circle"); CH.Ring.Filled = false; CH.Ring.Visible = false; CH.Ring.NumSides = 64
-CH.RingOut    = Drawing.new("Circle"); CH.RingOut.Filled = false; CH.RingOut.Visible = false; CH.RingOut.NumSides = 64
+CH.Dot     = Drawing.new("Circle"); CH.Dot.Filled = true;  CH.Dot.Visible = false; CH.Dot.NumSides = 32
+CH.DotOut  = Drawing.new("Circle"); CH.DotOut.Filled = true;  CH.DotOut.Visible = false; CH.DotOut.NumSides = 32
+CH.Ring    = Drawing.new("Circle"); CH.Ring.Filled = false; CH.Ring.Visible = false; CH.Ring.NumSides = 64
+CH.RingOut = Drawing.new("Circle"); CH.RingOut.Filled = false; CH.RingOut.Visible = false; CH.RingOut.NumSides = 64
+CH.Label    = Drawing.new("Text");  CH.Label.Visible = false; CH.Label.Center = true
+CH.Label.Size = 14; CH.Label.Outline = true; CH.Label.Text = "Xeioa"
+CH.LabelOut = Drawing.new("Text"); CH.LabelOut.Visible = false; CH.LabelOut.Center = true
+CH.LabelOut.Size = 14; CH.LabelOut.Outline = false; CH.LabelOut.Text = "Xeioa"
 
-local function RenderCrosshair()
+local function RenderCrosshair(dt)
     local show = Toggles.CrosshairEnabled and Toggles.CrosshairEnabled.Value
     for i = 1, 4 do CH.Lines[i].Visible = false; CH.Outlines[i].Visible = false end
     CH.Dot.Visible = false; CH.DotOut.Visible = false
     CH.Ring.Visible = false; CH.RingOut.Visible = false
+    CH.Label.Visible = false; CH.LabelOut.Visible = false
     if not show then return end
 
     local cx = Camera.ViewportSize.X / 2
     local cy = Camera.ViewportSize.Y / 2
     local center = Vector2.new(cx, cy)
 
-    local style   = Options.CrosshairStyle    and Options.CrosshairStyle.Value    or "Cross"
-    local size    = Options.CrosshairSize     and Options.CrosshairSize.Value     or 10
-    local gap     = Options.CrosshairGap      and Options.CrosshairGap.Value      or 3
+    local style   = Options.CrosshairStyle     and Options.CrosshairStyle.Value     or "Cross"
+    local size    = Options.CrosshairSize      and Options.CrosshairSize.Value      or 10
+    local gap     = Options.CrosshairGap       and Options.CrosshairGap.Value       or 3
     local thick   = Options.CrosshairThickness and Options.CrosshairThickness.Value or 1
-    local ang     = math.rad(Options.CrosshairRotation and Options.CrosshairRotation.Value or 0)
-    local col     = Options.CrosshairColor    and Options.CrosshairColor.Value    or Color3.fromRGB(255, 255, 255)
-    local outline = Toggles.CrosshairOutline  and Toggles.CrosshairOutline.Value
+    local col     = Options.CrosshairColor     and Options.CrosshairColor.Value     or Color3.fromRGB(255, 255, 255)
+    local outline = Toggles.CrosshairOutline   and Toggles.CrosshairOutline.Value
     local outCol  = Options.CrosshairOutlineColor and Options.CrosshairOutlineColor.Value or Color3.fromRGB(0, 0, 0)
+    local spin    = Toggles.CrosshairSpin      and Toggles.CrosshairSpin.Value
+
+    local ang
+    if spin then
+        local spinSpeed = Options.CrosshairSpinSpeed and Options.CrosshairSpinSpeed.Value or 90
+        CH.SpinAngle = (CH.SpinAngle + math.rad(spinSpeed) * dt) % (math.pi * 2)
+        ang = CH.SpinAngle
+    else
+        ang = math.rad(Options.CrosshairRotation and Options.CrosshairRotation.Value or 0)
+    end
 
     local cosA, sinA = math.cos(ang), math.sin(ang)
     local function rv(dx, dy) return Vector2.new(dx * cosA - dy * sinA, dx * sinA + dy * cosA) end
@@ -995,9 +1053,17 @@ local function RenderCrosshair()
             CH.Lines[i].Color = col; CH.Lines[i].Thickness = thick
         end
     end
+
+    if Toggles.CrosshairLabel and Toggles.CrosshairLabel.Value then
+        local labelY = cy + (size + gap) + 10
+        CH.Label.Visible = true
+        CH.Label.Position = Vector2.new(cx, labelY)
+        CH.Label.Color = col
+        CH.Label.Font = 2
+    end
 end
 
-RunService.RenderStepped:Connect(RenderCrosshair)
+RunService.RenderStepped:Connect(function(dt) RenderCrosshair(dt) end)
 
 local MovLeft = Tabs.Movement:AddLeftGroupbox("Character", "zap")
 local MovRight = Tabs.Movement:AddRightGroupbox("CFrame Speed (Fly)", "wind")
@@ -1045,7 +1111,15 @@ MovLeft:AddToggle("InfiniteJump", {
 MovLeft:AddToggle("BhopEnabled", {
     Text = "Bunny Hop",
     Default = false,
-    Tooltip = "Auto-jump on land. On Mobile: always active when enabled.",
+})
+
+MovLeft:AddSlider("BhopSpeed", {
+    Text = "Bhop Speed",
+    Default = 30,
+    Min = 5,
+    Max = 200,
+    Rounding = 0,
+    Suffix = " u/s",
 })
 
 MovRight:AddToggle("CFSpeedEnabled", {
