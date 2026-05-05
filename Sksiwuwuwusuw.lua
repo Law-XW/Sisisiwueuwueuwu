@@ -515,26 +515,26 @@ end
 local NoClipConn = nil
 local CFSpeedConn = nil
 local InfiniteJumpConn = nil
+local BhopConn = nil
+
+local IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
 local function StartCFSpeed()
     CFSpeedConn = RunService.RenderStepped:Connect(function()
         if not Toggles.CFSpeedEnabled or not Toggles.CFSpeedEnabled.Value then return end
         local char = LocalPlayer.Character
         if not char then return end
-        local root = char:FindFirstChild("HumanoidRootPart")
+        local root = FindFirstChild(char, "HumanoidRootPart")
         if not root then return end
-
         local speed = Options.CFSpeed and Options.CFSpeed.Value or 50
         local moveDir = Vector3.zero
         local cf = Camera.CFrame
-
         if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cf.LookVector end
         if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cf.LookVector end
         if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cf.RightVector end
         if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cf.RightVector end
         if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) end
         if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0, 1, 0) end
-
         if moveDir.Magnitude > 0 then
             root.CFrame = root.CFrame + moveDir.Unit * speed * 0.05
         end
@@ -560,11 +560,28 @@ local function StartInfiniteJump()
     InfiniteJumpConn = UserInputService.JumpRequest:Connect(function()
         if not Toggles.InfiniteJump or not Toggles.InfiniteJump.Value then return end
         local char = LocalPlayer.Character
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local hum = char and FindFirstChildOfClass(char, "Humanoid")
         if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
     end)
 end
 StartInfiniteJump()
+
+local function StartBhop()
+    BhopConn = RunService.Stepped:Connect(function()
+        if not Toggles.BhopEnabled or not Toggles.BhopEnabled.Value then return end
+        local char = LocalPlayer.Character
+        if not char then return end
+        local hum = FindFirstChildOfClass(char, "Humanoid")
+        if not hum then return end
+        local holding = IsMobile or UserInputService:IsKeyDown(Enum.KeyCode.Space)
+        if not holding then return end
+        local state = hum:GetState()
+        if state == Enum.HumanoidStateType.Landed or state == Enum.HumanoidStateType.Running then
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end)
+end
+StartBhop()
 
 RunService.RenderStepped:Connect(function()
     RenderESP()
@@ -855,38 +872,132 @@ VisualRight:AddToggle("CrosshairEnabled", {
     Default = false,
 })
 
-local CrosshairH = Drawing.new("Line")
-CrosshairH.Visible = false
-CrosshairH.Color = Color3.fromRGB(255, 255, 255)
-CrosshairH.Thickness = 1
+VisualRight:AddDropdown("CrosshairStyle", {
+    Values = { "Cross", "T-Cross", "Dot", "Circle" },
+    Default = "Cross",
+    Text = "Style",
+})
 
-local CrosshairV = Drawing.new("Line")
-CrosshairV.Visible = false
-CrosshairV.Color = Color3.fromRGB(255, 255, 255)
-CrosshairV.Thickness = 1
+VisualRight:AddSlider("CrosshairSize", {
+    Text = "Size",
+    Default = 10,
+    Min = 2,
+    Max = 60,
+    Rounding = 0,
+})
 
-RunService.RenderStepped:Connect(function()
-    local show = Toggles.CrosshairEnabled and Toggles.CrosshairEnabled.Value
-    CrosshairH.Visible = show and true or false
-    CrosshairV.Visible = show and true or false
-    if show then
-        local cx = Camera.ViewportSize.X / 2
-        local cy = Camera.ViewportSize.Y / 2
-        local sz = 10
-        local col = Options.CrosshairColor and Options.CrosshairColor.Value or Color3.fromRGB(255, 255, 255)
-        CrosshairH.From = Vector2.new(cx - sz, cy)
-        CrosshairH.To = Vector2.new(cx + sz, cy)
-        CrosshairH.Color = col
-        CrosshairV.From = Vector2.new(cx, cy - sz)
-        CrosshairV.To = Vector2.new(cx, cy + sz)
-        CrosshairV.Color = col
-    end
-end)
+VisualRight:AddSlider("CrosshairGap", {
+    Text = "Gap",
+    Default = 3,
+    Min = 0,
+    Max = 20,
+    Rounding = 0,
+})
 
-VisualRight:AddLabel("Crosshair Color"):AddColorPicker("CrosshairColor", {
+VisualRight:AddSlider("CrosshairThickness", {
+    Text = "Thickness",
+    Default = 1,
+    Min = 1,
+    Max = 6,
+    Rounding = 0,
+})
+
+VisualRight:AddSlider("CrosshairRotation", {
+    Text = "Rotation",
+    Default = 0,
+    Min = 0,
+    Max = 180,
+    Rounding = 0,
+    Suffix = "°",
+})
+
+VisualRight:AddToggle("CrosshairOutline", {
+    Text = "Outline",
+    Default = true,
+})
+
+VisualRight:AddLabel("Color"):AddColorPicker("CrosshairColor", {
     Default = Color3.fromRGB(255, 255, 255),
     Title = "Crosshair Color",
 })
+
+VisualRight:AddLabel("Outline Color"):AddColorPicker("CrosshairOutlineColor", {
+    Default = Color3.fromRGB(0, 0, 0),
+    Title = "Crosshair Outline Color",
+})
+
+local CH = { Lines = {}, Outlines = {} }
+for i = 1, 4 do
+    local l = Drawing.new("Line"); l.Visible = false; l.Thickness = 1
+    local o = Drawing.new("Line"); o.Visible = false; o.Thickness = 3
+    CH.Lines[i] = l; CH.Outlines[i] = o
+end
+CH.Dot        = Drawing.new("Circle"); CH.Dot.Filled = true;  CH.Dot.Visible = false;  CH.Dot.NumSides = 32
+CH.DotOut     = Drawing.new("Circle"); CH.DotOut.Filled = true;  CH.DotOut.Visible = false; CH.DotOut.NumSides = 32
+CH.Ring       = Drawing.new("Circle"); CH.Ring.Filled = false; CH.Ring.Visible = false; CH.Ring.NumSides = 64
+CH.RingOut    = Drawing.new("Circle"); CH.RingOut.Filled = false; CH.RingOut.Visible = false; CH.RingOut.NumSides = 64
+
+local function RenderCrosshair()
+    local show = Toggles.CrosshairEnabled and Toggles.CrosshairEnabled.Value
+    for i = 1, 4 do CH.Lines[i].Visible = false; CH.Outlines[i].Visible = false end
+    CH.Dot.Visible = false; CH.DotOut.Visible = false
+    CH.Ring.Visible = false; CH.RingOut.Visible = false
+    if not show then return end
+
+    local cx = Camera.ViewportSize.X / 2
+    local cy = Camera.ViewportSize.Y / 2
+    local center = Vector2.new(cx, cy)
+
+    local style   = Options.CrosshairStyle    and Options.CrosshairStyle.Value    or "Cross"
+    local size    = Options.CrosshairSize     and Options.CrosshairSize.Value     or 10
+    local gap     = Options.CrosshairGap      and Options.CrosshairGap.Value      or 3
+    local thick   = Options.CrosshairThickness and Options.CrosshairThickness.Value or 1
+    local ang     = math.rad(Options.CrosshairRotation and Options.CrosshairRotation.Value or 0)
+    local col     = Options.CrosshairColor    and Options.CrosshairColor.Value    or Color3.fromRGB(255, 255, 255)
+    local outline = Toggles.CrosshairOutline  and Toggles.CrosshairOutline.Value
+    local outCol  = Options.CrosshairOutlineColor and Options.CrosshairOutlineColor.Value or Color3.fromRGB(0, 0, 0)
+
+    local cosA, sinA = math.cos(ang), math.sin(ang)
+    local function rv(dx, dy) return Vector2.new(dx * cosA - dy * sinA, dx * sinA + dy * cosA) end
+
+    if style == "Dot" then
+        local r = math.max(size / 2, 1)
+        if outline then
+            CH.DotOut.Visible = true; CH.DotOut.Position = center
+            CH.DotOut.Radius = r + 2; CH.DotOut.Color = outCol; CH.DotOut.Thickness = 1
+        end
+        CH.Dot.Visible = true; CH.Dot.Position = center
+        CH.Dot.Radius = r; CH.Dot.Color = col; CH.Dot.Thickness = 1
+
+    elseif style == "Circle" then
+        local r = math.max(size, 2)
+        if outline then
+            CH.RingOut.Visible = true; CH.RingOut.Position = center
+            CH.RingOut.Radius = r + 1; CH.RingOut.Color = outCol; CH.RingOut.Thickness = thick + 2
+        end
+        CH.Ring.Visible = true; CH.Ring.Position = center
+        CH.Ring.Radius = r; CH.Ring.Color = col; CH.Ring.Thickness = thick
+
+    else
+        local dirs = { rv(1, 0), rv(-1, 0), rv(0, -1), rv(0, 1) }
+        local count = (style == "T-Cross") and 3 or 4
+        for i = 1, count do
+            local d = dirs[i]
+            local from = center + d * gap
+            local to   = center + d * (gap + size)
+            if outline then
+                CH.Outlines[i].Visible = true
+                CH.Outlines[i].From = from; CH.Outlines[i].To = to
+                CH.Outlines[i].Color = outCol; CH.Outlines[i].Thickness = thick + 2
+            end
+            CH.Lines[i].Visible = true
+            CH.Lines[i].From = from; CH.Lines[i].To = to
+            CH.Lines[i].Color = col; CH.Lines[i].Thickness = thick
+        end
+    end
+end
+
+RunService.RenderStepped:Connect(RenderCrosshair)
 
 local MovLeft = Tabs.Movement:AddLeftGroupbox("Character", "zap")
 local MovRight = Tabs.Movement:AddRightGroupbox("CFrame Speed (Fly)", "wind")
@@ -929,6 +1040,12 @@ MovLeft:AddToggle("NoClip", {
 MovLeft:AddToggle("InfiniteJump", {
     Text = "Infinite Jump",
     Default = false,
+})
+
+MovLeft:AddToggle("BhopEnabled", {
+    Text = "Bunny Hop",
+    Default = false,
+    Tooltip = "Auto-jump on land. On Mobile: always active when enabled.",
 })
 
 MovRight:AddToggle("CFSpeedEnabled", {
