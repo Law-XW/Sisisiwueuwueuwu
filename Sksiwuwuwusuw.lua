@@ -602,6 +602,17 @@ end
 StartBhop()
 
 local AntiAimAngle = 0
+local TPRotX = 0
+local TPRotY = 20
+local TP_SENS = 0.35
+
+UserInputService.InputChanged:Connect(function(input)
+    if not Toggles.ThirdPerson or not Toggles.ThirdPerson.Value then return end
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        TPRotX = (TPRotX - input.Delta.X * TP_SENS) % 360
+        TPRotY = math.clamp(TPRotY - input.Delta.Y * TP_SENS, -75, 75)
+    end
+end)
 
 RunService.RenderStepped:Connect(function(dt)
     RenderESP()
@@ -620,12 +631,36 @@ RunService.RenderStepped:Connect(function(dt)
     end
 
     if Toggles.ThirdPerson and Toggles.ThirdPerson.Value then
-        local dist = Options.ThirdPersonDist and Options.ThirdPersonDist.Value or 10
-        LocalPlayer.CameraMaxZoomDistance = dist
-        LocalPlayer.CameraMinZoomDistance = dist
+        Camera.CameraType = Enum.CameraType.Scriptable
+        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+        local tpChar = LocalPlayer.Character
+        local tpRoot = tpChar and FindFirstChild(tpChar, "HumanoidRootPart")
+        if tpRoot then
+            local dist = Options.ThirdPersonDist and Options.ThirdPersonDist.Value or 10
+            local focus = tpRoot.Position + Vector3.new(0, 1.5, 0)
+            local rotCF = CFrame.Angles(0, math.rad(TPRotX), 0) * CFrame.Angles(math.rad(TPRotY), 0, 0)
+            local camPos = focus + rotCF * Vector3.new(0, 0, dist)
+            Camera.CFrame = CFrame.new(camPos, focus)
+        end
     else
-        LocalPlayer.CameraMaxZoomDistance = 400
-        LocalPlayer.CameraMinZoomDistance = 0.5
+        if Camera.CameraType == Enum.CameraType.Scriptable then
+            Camera.CameraType = Enum.CameraType.Custom
+            UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+        end
+    end
+
+    if Toggles.AntiViewModel and Toggles.AntiViewModel.Value then
+        for _, obj in pairs(Camera:GetChildren()) do
+            if obj:IsA("BasePart") then
+                obj.LocalTransparencyModifier = 1
+            elseif obj:IsA("Model") then
+                for _, part in pairs(obj:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.LocalTransparencyModifier = 1
+                    end
+                end
+            end
+        end
     end
 
     if Toggles.AntiAimEnabled and Toggles.AntiAimEnabled.Value then
@@ -917,6 +952,11 @@ VisualLeft2:AddSlider("ThirdPersonDist", {
     Max = 50,
     Rounding = 0,
     Suffix = " studs",
+})
+
+VisualLeft2:AddToggle("AntiViewModel", {
+    Text = "Anti ViewModel",
+    Default = false,
 })
 
 VisualRight:AddToggle("FullbrightEnabled", {
