@@ -18,13 +18,8 @@ local tabs = {
     settings = window:AddTab("Settings", "settings"),
 }
 
-local aimbox      = tabs.combat:AddLeftGroupbox("Aimbot",   "crosshair")
-local trigbox     = tabs.combat:AddRightGroupbox("Trigger",  "zap")
-local movebox     = tabs.combat:AddLeftGroupbox("Movement",  "person")
-local miscbox     = tabs.combat:AddRightGroupbox("Misc",     "shield")
-local espbox      = tabs.visuals:AddLeftGroupbox("ESP",      "eye")
-local visualbox   = tabs.visuals:AddRightGroupbox("Visuals", "layers")
-local skybox_grp  = tabs.visuals:AddLeftGroupbox("Sky",      "sun")
+local combatbox   = tabs.combat:AddLeftGroupbox("combat",   "crosshair")
+local visualbox   = tabs.visuals:AddLeftGroupbox("visuals",  "eye")
 local skinbox     = tabs.skins:AddLeftGroupbox("skins",     "swords")
 local uibox       = tabs.settings:AddLeftGroupbox("ui",      "settings")
 local fpsbox      = tabs.settings:AddRightGroupbox("fps",    "activity")
@@ -140,14 +135,14 @@ runservice.RenderStepped:Connect(function()
     end
 end)
 
-aimbox:AddToggle('aim', { Text = 'aim', Default = false }):OnChanged(function() aim_enabled = toggles.aim.Value end)
-aimbox:AddToggle('fov', { Text = 'fov circle', Default = false }):OnChanged(function() fov_enabled = toggles.fov.Value end)
-aimbox:AddSlider('fov_r', { Text = 'fov radius', Default = 100, Min = 10, Max = 500, Rounding = 0 }):OnChanged(function() fov_radius = options.fov_r.Value end)
-aimbox:AddSlider('smth', { Text = 'smoothing', Default = 3, Min = 1, Max = 10, Rounding = 0 }):OnChanged(function() smoothing = options.smth.Value end)
+combatbox:AddToggle('aim', { Text = 'aim', Default = false }):OnChanged(function() aim_enabled = toggles.aim.Value end)
+combatbox:AddToggle('fov', { Text = 'fov', Default = false }):OnChanged(function() fov_enabled = toggles.fov.Value end)
+combatbox:AddSlider('fov_r', { Text = 'fov r', Default = 100, Min = 10, Max = 500, Rounding = 0 }):OnChanged(function() fov_radius = options.fov_r.Value end)
+combatbox:AddSlider('smth', { Text = 'smth', Default = 3, Min = 1, Max = 10, Rounding = 0 }):OnChanged(function() smoothing = options.smth.Value end)
 
 local trigger_enabled, trigger_delay = false, 0
-trigbox:AddToggle('trig', { Text = 'triggerbot', Default = false }):OnChanged(function() trigger_enabled = toggles.trig.Value end)
-trigbox:AddSlider('trig_d', { Text = 'delay (ms)', Default = 0, Min = 0, Max = 500, Rounding = 0 }):OnChanged(function() trigger_delay = options.trig_d.Value end)
+combatbox:AddToggle('trig', { Text = 'trig', Default = false }):OnChanged(function() trigger_enabled = toggles.trig.Value end)
+combatbox:AddSlider('trig_d', { Text = 'trig d', Default = 0, Min = 0, Max = 500, Rounding = 0 }):OnChanged(function() trigger_delay = options.trig_d.Value end)
 
 task.spawn(function()
     while task.wait(0.01) do
@@ -175,8 +170,8 @@ task.spawn(function()
 end)
 
 local hitbox_enabled, hitbox_size, hb_originals = false, 3, {}
-miscbox:AddToggle('hb', { Text = 'hitbox', Default = false }):OnChanged(function() hitbox_enabled = toggles.hb.Value end)
-miscbox:AddSlider('hb_s', { Text = 'hitbox size', Default = 3, Min = 1, Max = 3, Rounding = 1 }):OnChanged(function() hitbox_size = options.hb_s.Value end)
+combatbox:AddToggle('hb', { Text = 'hitbox', Default = false }):OnChanged(function() hitbox_enabled = toggles.hb.Value end)
+combatbox:AddSlider('hb_s', { Text = 'hitbox s', Default = 3, Min = 1, Max = 3, Rounding = 1 }):OnChanged(function() hitbox_size = options.hb_s.Value end)
 
 task.spawn(function()
     while task.wait(0.5) do
@@ -200,7 +195,7 @@ task.spawn(function()
 end)
 
 local bhop_enabled = false
-movebox:AddToggle('bhop', { Text = 'bhop', Default = false }):OnChanged(function() bhop_enabled = toggles.bhop.Value end)
+combatbox:AddToggle('bhop', { Text = 'bhop', Default = false }):OnChanged(function() bhop_enabled = toggles.bhop.Value end)
 runservice.RenderStepped:Connect(function()
     if bhop_enabled and inputservice:IsKeyDown(Enum.KeyCode.Space) and is_alive() and plr.Character then
         local h = plr.Character:FindFirstChildOfClass("Humanoid")
@@ -211,7 +206,7 @@ runservice.RenderStepped:Connect(function()
 end)
 
 local norecoil_enabled = false
-movebox:AddToggle('nr', { Text = 'no recoil', Default = false }):OnChanged(function() norecoil_enabled = toggles.nr.Value end)
+combatbox:AddToggle('nr', { Text = 'no recoil', Default = false }):OnChanged(function() norecoil_enabled = toggles.nr.Value end)
 
 task.spawn(function()
     while task.wait(0.5) do
@@ -241,7 +236,7 @@ local wallbang_keywords = {
     "door3_low","cylinder.006"
 }
 
-miscbox:AddToggle('wb', { Text = 'wallbang', Default = false }):OnChanged(function()
+combatbox:AddToggle('wb', { Text = 'wallbang', Default = false }):OnChanged(function()
     wallbang_enabled = toggles.wb.Value
     if wallbang_enabled then
         for _, v in ipairs(workspace_svc:GetDescendants()) do
@@ -271,7 +266,7 @@ miscbox:AddToggle('wb', { Text = 'wallbang', Default = false }):OnChanged(functi
     end
 end)
 
-miscbox:AddButton('wallbang', function()
+combatbox:AddButton('wallbang', function()
     for i, v in ipairs(workspace_svc:GetDescendants()) do
         local name = string.lower(v.Name)
         if string.find(name, "cube") or
@@ -528,9 +523,7 @@ task.spawn(function()
 end)
 
 -- ─── ESP ─────────────────────────────────────────────────────────────────────
-local ESP_ACCENT     = Color3.fromRGB(0, 200, 255)
-local ESP_HEAD_COLOR = Color3.fromRGB(0, 200, 255)
-local ESP_NAME_COLOR = Color3.new(1, 1, 1)
+local ESP_ACCENT  = Color3.fromRGB(0, 200, 255)
 local esp_enabled   = false
 local show_box      = true
 local show_headdot  = true
@@ -561,19 +554,26 @@ end
 local function create_esp_set()
     local blk = Color3.new(0,0,0)
     local e = {
+        -- corner bracket box (shadow + color, 4 corners × 2 lines each)
         tl_h_s=nl(2,blk), tl_v_s=nl(2,blk), tr_h_s=nl(2,blk), tr_v_s=nl(2,blk),
         bl_h_s=nl(2,blk), bl_v_s=nl(2,blk), br_h_s=nl(2,blk), br_v_s=nl(2,blk),
         tl_h=nl(1.5), tl_v=nl(1.5), tr_h=nl(1.5), tr_v=nl(1.5),
         bl_h=nl(1.5), bl_v=nl(1.5), br_h=nl(1.5), br_v=nl(1.5),
+        -- head dot
         head_s = nc(6, blk, 3),
         head   = nc(4, ESP_ACCENT, 1.5),
+        -- health bar (background track + colored fill)
         hp_bg  = nl(4, Color3.fromRGB(15,15,15)),
         hp_bar = nl(2, Color3.fromRGB(0,230,80)),
         hp_txt = nt(11, Color3.new(1,1,1), false),
+        -- name tag
         name   = nt(14, Color3.new(1,1,1), true),
+        -- distance label
         dist   = nt(11, Color3.fromRGB(180,180,180), true),
+        -- tracer / snapline
         snap_s = nl(2, blk),
         snap   = nl(1, ESP_ACCENT),
+        -- skeleton (7 bones)
         sk = {}
     }
     for i = 1, 7 do
@@ -661,20 +661,23 @@ runservice.RenderStepped:Connect(function()
                 local dst  = math.floor((cam.CFrame.Position - root.Position).Magnitude)
                 local bcol = (hpp < 0.3) and Color3.fromRGB(255,55,55) or ESP_ACCENT
 
+                -- Box (corner brackets)
                 if show_box then
                     draw_corners(e, bx, by, bw, bh, bcol)
                 else
                     hide_corners(e)
                 end
 
+                -- Head dot (independent toggle)
                 if show_headdot then
                     local hd2d = cam:WorldToViewportPoint(hd.Position)
                     e.head_s.Position = Vector2.new(hd2d.X+1, hd2d.Y+1); e.head_s.Visible = true
-                    e.head.Position   = Vector2.new(hd2d.X,   hd2d.Y);   e.head.Color = ESP_HEAD_COLOR; e.head.Visible = true
+                    e.head.Position   = Vector2.new(hd2d.X,   hd2d.Y);   e.head.Color = bcol; e.head.Visible = true
                 else
                     e.head_s.Visible = false; e.head.Visible = false
                 end
 
+                -- Health bar
                 if show_hp then
                     local hbx  = bx - 5
                     local hbot = by + bh
@@ -682,6 +685,7 @@ runservice.RenderStepped:Connect(function()
                     e.hp_bg.From  = Vector2.new(hbx, by-1);  e.hp_bg.To  = Vector2.new(hbx, hbot+1); e.hp_bg.Visible  = true
                     e.hp_bar.From = Vector2.new(hbx, hbot);  e.hp_bar.To = Vector2.new(hbx, hmid);
                     e.hp_bar.Color = hcol;                    e.hp_bar.Visible = true
+                    -- HP number (own toggle via show_hptext)
                     if show_hptext then
                         e.hp_txt.Text     = tostring(math.floor(hum.Health))
                         e.hp_txt.Position = Vector2.new(hbx - 3, hmid - 6)
@@ -694,11 +698,12 @@ runservice.RenderStepped:Connect(function()
                     e.hp_bg.Visible=false; e.hp_bar.Visible=false; e.hp_txt.Visible=false
                 end
 
+                -- Name
                 if show_name then
-                    e.name.Text = v.Name; e.name.Color = ESP_NAME_COLOR
-                    e.name.Position = Vector2.new(rp.X, by-19); e.name.Visible = true
+                    e.name.Text = v.Name; e.name.Position = Vector2.new(rp.X, by-19); e.name.Visible = true
                 else e.name.Visible = false end
 
+                -- Distance
                 if show_dist then
                     local dc = dst<40 and Color3.fromRGB(255,220,60)
                         or dst<100 and Color3.fromRGB(200,200,200)
@@ -707,6 +712,7 @@ runservice.RenderStepped:Connect(function()
                     e.dist.Position = Vector2.new(rp.X, by+bh+3); e.dist.Visible = true
                 else e.dist.Visible = false end
 
+                -- Tracer / snapline
                 if show_snap then
                     local f2d = Vector2.new(bot_p.X, bot_p.Y)
                     e.snap_s.From = sbot+Vector2.new(1,1); e.snap_s.To = f2d+Vector2.new(1,1); e.snap_s.Visible=true
@@ -714,6 +720,7 @@ runservice.RenderStepped:Connect(function()
                     e.snap.Color  = bcol;                  e.snap.Visible = true
                 else e.snap.Visible=false; e.snap_s.Visible=false end
 
+                -- Skeleton
                 if show_skeleton then
                     local function g2d(pn)
                         local p = v:FindFirstChild(pn); if not p then return nil end
@@ -750,28 +757,19 @@ runservice.RenderStepped:Connect(function()
     end
 end)
 
-espbox:AddToggle('esp',    { Text = 'esp',       Default = false }):OnChanged(function() esp_enabled   = toggles.esp.Value    end)
-espbox:AddToggle('esp_b',  { Text = 'box',       Default = true  }):OnChanged(function() show_box      = toggles.esp_b.Value  end)
-espbox:AddColorpicker('esp_box_col', { Text = 'box color', Default = Color3.fromRGB(0,200,255) }):OnChanged(function()
-    ESP_ACCENT = options.esp_box_col.Value
-end)
-espbox:AddToggle('esp_hd', { Text = 'head dot',  Default = true  }):OnChanged(function() show_headdot = toggles.esp_hd.Value end)
-espbox:AddColorpicker('esp_hd_col', { Text = 'head color', Default = Color3.fromRGB(0,200,255) }):OnChanged(function()
-    ESP_HEAD_COLOR = options.esp_hd_col.Value
-end)
-espbox:AddToggle('esp_h',  { Text = 'hp bar',    Default = true  }):OnChanged(function() show_hp       = toggles.esp_h.Value  end)
-espbox:AddToggle('esp_ht', { Text = 'hp number', Default = true  }):OnChanged(function() show_hptext  = toggles.esp_ht.Value end)
-espbox:AddToggle('esp_n',  { Text = 'name',      Default = true  }):OnChanged(function() show_name     = toggles.esp_n.Value  end)
-espbox:AddColorpicker('esp_n_col', { Text = 'name color', Default = Color3.new(1,1,1) }):OnChanged(function()
-    ESP_NAME_COLOR = options.esp_n_col.Value
-end)
-espbox:AddToggle('esp_d',  { Text = 'distance',  Default = true  }):OnChanged(function() show_dist     = toggles.esp_d.Value  end)
-espbox:AddToggle('esp_sn', { Text = 'tracer',    Default = false }):OnChanged(function() show_snap     = toggles.esp_sn.Value end)
-espbox:AddToggle('esp_sk', { Text = 'skeleton',  Default = false }):OnChanged(function() show_skeleton = toggles.esp_sk.Value end)
+visualbox:AddToggle('esp',    { Text = 'esp',        Default = false }):OnChanged(function() esp_enabled   = toggles.esp.Value    end)
+visualbox:AddToggle('esp_b',  { Text = 'box',        Default = true  }):OnChanged(function() show_box      = toggles.esp_b.Value  end)
+visualbox:AddToggle('esp_hd', { Text = 'head dot',   Default = true  }):OnChanged(function() show_headdot = toggles.esp_hd.Value end)
+visualbox:AddToggle('esp_h',  { Text = 'hp bar',     Default = true  }):OnChanged(function() show_hp       = toggles.esp_h.Value  end)
+visualbox:AddToggle('esp_ht', { Text = 'hp number',  Default = true  }):OnChanged(function() show_hptext  = toggles.esp_ht.Value end)
+visualbox:AddToggle('esp_n',  { Text = 'name',       Default = true  }):OnChanged(function() show_name     = toggles.esp_n.Value  end)
+visualbox:AddToggle('esp_d',  { Text = 'distance',   Default = true  }):OnChanged(function() show_dist     = toggles.esp_d.Value  end)
+visualbox:AddToggle('esp_sn', { Text = 'tracer',     Default = false }):OnChanged(function() show_snap     = toggles.esp_sn.Value end)
+visualbox:AddToggle('esp_sk', { Text = 'skeleton',   Default = false }):OnChanged(function() show_skeleton = toggles.esp_sk.Value end)
 
 local antiflash, antismoke = false, false
-visualbox:AddToggle('af', { Text = 'no flash', Default = false }):OnChanged(function() antiflash = toggles.af.Value end)
-visualbox:AddToggle('as', { Text = 'no smoke', Default = false }):OnChanged(function() antismoke = toggles.as.Value end)
+visualbox:AddToggle('af', { Text = 'no flsh', Default = false }):OnChanged(function() antiflash = toggles.af.Value end)
+visualbox:AddToggle('as', { Text = 'no smk', Default = false }):OnChanged(function() antismoke = toggles.as.Value end)
 
 task.spawn(function()
     while task.wait(0.2) do
@@ -1188,84 +1186,19 @@ uibox:AddDropdown('ch_col', {
     ch_color = map[options.ch_col.Value] or Color3.fromRGB(0,200,255)
 end)
 
-local lighting_svc = game:GetService("Lighting")
-local custom_sky_enabled = false
-local sky_instance = nil
-local sky_atm_instance = nil
-
-local sky_presets = {
-    ["Clear Day"]  = { Brightness=2,   Ambient=Color3.fromRGB(80,80,90),    FogEnd=3000, FogColor=Color3.fromRGB(192,224,255), ClockTime=14 },
-    ["Night"]      = { Brightness=0.2, Ambient=Color3.fromRGB(20,20,40),    FogEnd=600,  FogColor=Color3.fromRGB(10,10,30),   ClockTime=0  },
-    ["Sunset"]     = { Brightness=1.4, Ambient=Color3.fromRGB(130,80,50),   FogEnd=900,  FogColor=Color3.fromRGB(255,140,70), ClockTime=18 },
-    ["Storm"]      = { Brightness=0.4, Ambient=Color3.fromRGB(50,50,60),    FogEnd=250,  FogColor=Color3.fromRGB(70,70,90),   ClockTime=12 },
-    ["Neon Night"] = { Brightness=0.1, Ambient=Color3.fromRGB(15,10,35),    FogEnd=400,  FogColor=Color3.fromRGB(30,0,60),    ClockTime=1  },
-}
-
-local orig_lighting = {
-    Brightness = lighting_svc.Brightness,
-    Ambient    = lighting_svc.Ambient,
-    FogEnd     = lighting_svc.FogEnd,
-    FogColor   = lighting_svc.FogColor,
-    ClockTime  = lighting_svc.ClockTime,
-}
-
-local function apply_sky(preset_name)
-    local p = sky_presets[preset_name]
-    if not p then return end
-    lighting_svc.Brightness = p.Brightness
-    lighting_svc.Ambient    = p.Ambient
-    lighting_svc.FogEnd     = p.FogEnd
-    lighting_svc.FogColor   = p.FogColor
-    lighting_svc.ClockTime  = p.ClockTime
-end
-
-local function restore_sky()
-    lighting_svc.Brightness = orig_lighting.Brightness
-    lighting_svc.Ambient    = orig_lighting.Ambient
-    lighting_svc.FogEnd     = orig_lighting.FogEnd
-    lighting_svc.FogColor   = orig_lighting.FogColor
-    lighting_svc.ClockTime  = orig_lighting.ClockTime
-end
-
-skybox_grp:AddToggle('csky', { Text = 'custom sky', Default = false }):OnChanged(function()
-    custom_sky_enabled = toggles.csky.Value
-    if custom_sky_enabled then
-        apply_sky(options.sky_preset.Value)
-    else
-        restore_sky()
-    end
-end)
-
-skybox_grp:AddDropdown('sky_preset', {
-    Text    = 'preset',
-    Values  = {"Clear Day", "Night", "Sunset", "Storm", "Neon Night"},
-    Default = "Clear Day",
+-- ─── ESP ACCENT COLOR ────────────────────────────────────────────────────────
+uibox:AddDropdown('esp_col', {
+    Text    = 'esp color',
+    Values  = {"Cyan", "Green", "Purple", "Orange", "White", "Red"},
+    Default = "Cyan",
 }):OnChanged(function()
-    if custom_sky_enabled then
-        apply_sky(options.sky_preset.Value)
-    end
-end)
-
-skybox_grp:AddColorpicker('sky_fog_col', { Text = 'fog color', Default = Color3.fromRGB(192,224,255) }):OnChanged(function()
-    if custom_sky_enabled then
-        lighting_svc.FogColor = options.sky_fog_col.Value
-    end
-end)
-
-skybox_grp:AddSlider('sky_fog_end', { Text = 'fog distance', Default = 3000, Min = 50, Max = 5000, Rounding = 0 }):OnChanged(function()
-    if custom_sky_enabled then
-        lighting_svc.FogEnd = options.sky_fog_end.Value
-    end
-end)
-
-skybox_grp:AddSlider('sky_bright', { Text = 'brightness', Default = 200, Min = 0, Max = 500, Rounding = 0 }):OnChanged(function()
-    if custom_sky_enabled then
-        lighting_svc.Brightness = options.sky_bright.Value / 100
-    end
-end)
-
-skybox_grp:AddSlider('sky_time', { Text = 'time of day', Default = 14, Min = 0, Max = 24, Rounding = 0 }):OnChanged(function()
-    if custom_sky_enabled then
-        lighting_svc.ClockTime = options.sky_time.Value
-    end
+    local map = {
+        Cyan   = Color3.fromRGB(0,200,255),
+        Green  = Color3.fromRGB(0,230,80),
+        Purple = Color3.fromRGB(180,80,255),
+        Orange = Color3.fromRGB(255,150,30),
+        White  = Color3.new(1,1,1),
+        Red    = Color3.fromRGB(255,55,55),
+    }
+    ESP_ACCENT = map[options.esp_col.Value] or Color3.fromRGB(0,200,255)
 end)
