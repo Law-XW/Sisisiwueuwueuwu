@@ -1,8 +1,8 @@
 local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
 local library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local window = library:CreateWindow({
-    Title = "megaskid",
-    Footer = "megaskid",
+    Title = "Xeioa",
+    Footer = "Xeioa",
     Icon = 95816097006870,
     NotifySide = "Right",
     ShowCustomCursor = true,
@@ -11,10 +11,23 @@ local window = library:CreateWindow({
 local toggles = library.Toggles
 local options = library.Options
 
-local tabs = { main = window:AddTab("Main", "user") }
-local combatbox = tabs.main:AddLeftGroupbox("combat", "crosshair")
-local skinbox = tabs.main:AddLeftGroupbox("skins", "swords")
-local visualbox = tabs.main:AddRightGroupbox("visuals", "eye")
+local tabs = {
+    combat   = window:AddTab("Combat",   "crosshair"),
+    visuals  = window:AddTab("Visuals",  "eye"),
+    skins    = window:AddTab("Skins",    "swords"),
+    settings = window:AddTab("Settings", "settings"),
+}
+
+local aimbox      = tabs.combat:AddLeftGroupbox("Aimbot",   "crosshair")
+local trigbox     = tabs.combat:AddRightGroupbox("Trigger",  "zap")
+local movebox     = tabs.combat:AddLeftGroupbox("Movement",  "person")
+local miscbox     = tabs.combat:AddRightGroupbox("Misc",     "shield")
+local espbox      = tabs.visuals:AddLeftGroupbox("ESP",      "eye")
+local visualbox   = tabs.visuals:AddRightGroupbox("Visuals", "layers")
+local skybox_grp  = tabs.visuals:AddLeftGroupbox("Sky",      "sun")
+local skinbox     = tabs.skins:AddLeftGroupbox("skins",     "swords")
+local uibox       = tabs.settings:AddLeftGroupbox("ui",      "settings")
+local fpsbox      = tabs.settings:AddRightGroupbox("fps",    "activity")
 
 local replicatedstorage = game:GetService("ReplicatedStorage")
 local runservice = game:GetService("RunService")
@@ -127,14 +140,14 @@ runservice.RenderStepped:Connect(function()
     end
 end)
 
-combatbox:AddToggle('aim', { Text = 'aim', Default = false }):OnChanged(function() aim_enabled = toggles.aim.Value end)
-combatbox:AddToggle('fov', { Text = 'fov', Default = false }):OnChanged(function() fov_enabled = toggles.fov.Value end)
-combatbox:AddSlider('fov_r', { Text = 'fov r', Default = 100, Min = 10, Max = 500, Rounding = 0 }):OnChanged(function() fov_radius = options.fov_r.Value end)
-combatbox:AddSlider('smth', { Text = 'smth', Default = 3, Min = 1, Max = 10, Rounding = 0 }):OnChanged(function() smoothing = options.smth.Value end)
+aimbox:AddToggle('aim', { Text = 'aim', Default = false }):OnChanged(function() aim_enabled = toggles.aim.Value end)
+aimbox:AddToggle('fov', { Text = 'fov circle', Default = false }):OnChanged(function() fov_enabled = toggles.fov.Value end)
+aimbox:AddSlider('fov_r', { Text = 'fov radius', Default = 100, Min = 10, Max = 500, Rounding = 0 }):OnChanged(function() fov_radius = options.fov_r.Value end)
+aimbox:AddSlider('smth', { Text = 'smoothing', Default = 3, Min = 1, Max = 10, Rounding = 0 }):OnChanged(function() smoothing = options.smth.Value end)
 
 local trigger_enabled, trigger_delay = false, 0
-combatbox:AddToggle('trig', { Text = 'trig', Default = false }):OnChanged(function() trigger_enabled = toggles.trig.Value end)
-combatbox:AddSlider('trig_d', { Text = 'trig d', Default = 0, Min = 0, Max = 500, Rounding = 0 }):OnChanged(function() trigger_delay = options.trig_d.Value end)
+trigbox:AddToggle('trig', { Text = 'triggerbot', Default = false }):OnChanged(function() trigger_enabled = toggles.trig.Value end)
+trigbox:AddSlider('trig_d', { Text = 'delay (ms)', Default = 0, Min = 0, Max = 500, Rounding = 0 }):OnChanged(function() trigger_delay = options.trig_d.Value end)
 
 task.spawn(function()
     while task.wait(0.01) do
@@ -162,8 +175,8 @@ task.spawn(function()
 end)
 
 local hitbox_enabled, hitbox_size, hb_originals = false, 3, {}
-combatbox:AddToggle('hb', { Text = 'hitbox', Default = false }):OnChanged(function() hitbox_enabled = toggles.hb.Value end)
-combatbox:AddSlider('hb_s', { Text = 'hitbox s', Default = 3, Min = 1, Max = 3, Rounding = 1 }):OnChanged(function() hitbox_size = options.hb_s.Value end)
+miscbox:AddToggle('hb', { Text = 'hitbox', Default = false }):OnChanged(function() hitbox_enabled = toggles.hb.Value end)
+miscbox:AddSlider('hb_s', { Text = 'hitbox size', Default = 3, Min = 1, Max = 3, Rounding = 1 }):OnChanged(function() hitbox_size = options.hb_s.Value end)
 
 task.spawn(function()
     while task.wait(0.5) do
@@ -187,7 +200,7 @@ task.spawn(function()
 end)
 
 local bhop_enabled = false
-combatbox:AddToggle('bhop', { Text = 'bhop', Default = false }):OnChanged(function() bhop_enabled = toggles.bhop.Value end)
+movebox:AddToggle('bhop', { Text = 'bhop', Default = false }):OnChanged(function() bhop_enabled = toggles.bhop.Value end)
 runservice.RenderStepped:Connect(function()
     if bhop_enabled and inputservice:IsKeyDown(Enum.KeyCode.Space) and is_alive() and plr.Character then
         local h = plr.Character:FindFirstChildOfClass("Humanoid")
@@ -198,7 +211,7 @@ runservice.RenderStepped:Connect(function()
 end)
 
 local norecoil_enabled = false
-combatbox:AddToggle('nr', { Text = 'no recoil', Default = false }):OnChanged(function() norecoil_enabled = toggles.nr.Value end)
+movebox:AddToggle('nr', { Text = 'no recoil', Default = false }):OnChanged(function() norecoil_enabled = toggles.nr.Value end)
 
 task.spawn(function()
     while task.wait(0.5) do
@@ -228,7 +241,7 @@ local wallbang_keywords = {
     "door3_low","cylinder.006"
 }
 
-combatbox:AddToggle('wb', { Text = 'wallbang', Default = false }):OnChanged(function()
+miscbox:AddToggle('wb', { Text = 'wallbang', Default = false }):OnChanged(function()
     wallbang_enabled = toggles.wb.Value
     if wallbang_enabled then
         for _, v in ipairs(workspace_svc:GetDescendants()) do
@@ -258,7 +271,7 @@ combatbox:AddToggle('wb', { Text = 'wallbang', Default = false }):OnChanged(func
     end
 end)
 
-combatbox:AddButton('wallbang', function()
+miscbox:AddButton('wallbang', function()
     for i, v in ipairs(workspace_svc:GetDescendants()) do
         local name = string.lower(v.Name)
         if string.find(name, "cube") or
@@ -514,68 +527,251 @@ task.spawn(function()
     end
 end)
 
-local esp_enabled, show_box, show_name, show_hp, show_dist, esp_cache = false, true, true, true, true, {}
+-- ─── ESP ─────────────────────────────────────────────────────────────────────
+local ESP_ACCENT     = Color3.fromRGB(0, 200, 255)
+local ESP_HEAD_COLOR = Color3.fromRGB(0, 200, 255)
+local ESP_NAME_COLOR = Color3.new(1, 1, 1)
+local esp_enabled   = false
+local show_box      = true
+local show_headdot  = true
+local show_name     = true
+local show_hp       = true
+local show_hptext   = true
+local show_dist     = true
+local show_snap     = false
+local show_skeleton = false
+local esp_cache     = {}
+
+local function nl(thick, col)
+    local l = Drawing.new("Line")
+    l.Thickness = thick or 1; l.Color = col or Color3.new(1,1,1)
+    l.Transparency = 1; l.Visible = false; return l
+end
+local function nt(sz, col, center)
+    local t = Drawing.new("Text")
+    t.Size = sz or 14; t.Color = col or Color3.new(1,1,1)
+    t.Outline = true; t.Center = center ~= false; t.Visible = false; return t
+end
+local function nc(r, col, thick)
+    local c = Drawing.new("Circle")
+    c.Radius = r or 4; c.Color = col or Color3.new(1,1,1)
+    c.Thickness = thick or 1; c.Filled = false; c.Visible = false; return c
+end
+
 local function create_esp_set()
+    local blk = Color3.new(0,0,0)
     local e = {
-        box_out = Drawing.new("Square"), box = Drawing.new("Square"),
-        name = Drawing.new("Text"), dist = Drawing.new("Text"),
-        hp_out = Drawing.new("Line"), hp_bar = Drawing.new("Line")
+        tl_h_s=nl(2,blk), tl_v_s=nl(2,blk), tr_h_s=nl(2,blk), tr_v_s=nl(2,blk),
+        bl_h_s=nl(2,blk), bl_v_s=nl(2,blk), br_h_s=nl(2,blk), br_v_s=nl(2,blk),
+        tl_h=nl(1.5), tl_v=nl(1.5), tr_h=nl(1.5), tr_v=nl(1.5),
+        bl_h=nl(1.5), bl_v=nl(1.5), br_h=nl(1.5), br_v=nl(1.5),
+        head_s = nc(6, blk, 3),
+        head   = nc(4, ESP_ACCENT, 1.5),
+        hp_bg  = nl(4, Color3.fromRGB(15,15,15)),
+        hp_bar = nl(2, Color3.fromRGB(0,230,80)),
+        hp_txt = nt(11, Color3.new(1,1,1), false),
+        name   = nt(14, Color3.new(1,1,1), true),
+        dist   = nt(11, Color3.fromRGB(180,180,180), true),
+        snap_s = nl(2, blk),
+        snap   = nl(1, ESP_ACCENT),
+        sk = {}
     }
-    e.box_out.Thickness = 3; e.box_out.Filled = false; e.box_out.Color = Color3.new(0,0,0)
-    e.box.Thickness = 1; e.box.Filled = false; e.box.Color = Color3.fromRGB(255, 50, 50)
-    e.name.Center = true; e.name.Outline = true; e.name.Color = Color3.new(1,1,1); e.name.Size = 16
-    e.dist.Center = true; e.dist.Outline = true; e.dist.Color = Color3.new(0.8,0.8,0.8); e.dist.Size = 13
-    e.hp_out.Thickness = 3; e.hp_out.Color = Color3.new(0,0,0)
-    e.hp_bar.Thickness = 1; e.hp_bar.Color = Color3.new(0,1,0)
+    for i = 1, 7 do
+        e.sk[i] = nl(1, Color3.fromRGB(200,200,200))
+        e.sk[i].Transparency = 0.6
+    end
     return e
+end
+
+local function hp_gradient(p)
+    p = math.clamp(p, 0, 1)
+    if p > 0.5 then return Color3.new((1-p)*2, 1, 0)
+    else return Color3.new(1, p*2, 0) end
+end
+
+local CK = {
+    "tl_h","tl_v","tr_h","tr_v","bl_h","bl_v","br_h","br_v",
+    "tl_h_s","tl_v_s","tr_h_s","tr_v_s","bl_h_s","bl_v_s","br_h_s","br_v_s",
+}
+local function draw_corners(e, bx, by, bw, bh, col)
+    local cx, cy, o = bw*0.28, bh*0.22, 1
+    e.tl_h_s.From=Vector2.new(bx-o,by-o);      e.tl_h_s.To=Vector2.new(bx+cx,by-o)
+    e.tl_v_s.From=Vector2.new(bx-o,by-o);      e.tl_v_s.To=Vector2.new(bx-o,by+cy)
+    e.tr_h_s.From=Vector2.new(bx+bw+o,by-o);   e.tr_h_s.To=Vector2.new(bx+bw-cx,by-o)
+    e.tr_v_s.From=Vector2.new(bx+bw+o,by-o);   e.tr_v_s.To=Vector2.new(bx+bw+o,by+cy)
+    e.bl_h_s.From=Vector2.new(bx-o,by+bh+o);   e.bl_h_s.To=Vector2.new(bx+cx,by+bh+o)
+    e.bl_v_s.From=Vector2.new(bx-o,by+bh+o);   e.bl_v_s.To=Vector2.new(bx-o,by+bh-cy)
+    e.br_h_s.From=Vector2.new(bx+bw+o,by+bh+o);e.br_h_s.To=Vector2.new(bx+bw-cx,by+bh+o)
+    e.br_v_s.From=Vector2.new(bx+bw+o,by+bh+o);e.br_v_s.To=Vector2.new(bx+bw+o,by+bh-cy)
+    e.tl_h.From=Vector2.new(bx,by);    e.tl_h.To=Vector2.new(bx+cx,by);    e.tl_h.Color=col
+    e.tl_v.From=Vector2.new(bx,by);    e.tl_v.To=Vector2.new(bx,by+cy);    e.tl_v.Color=col
+    e.tr_h.From=Vector2.new(bx+bw,by); e.tr_h.To=Vector2.new(bx+bw-cx,by); e.tr_h.Color=col
+    e.tr_v.From=Vector2.new(bx+bw,by); e.tr_v.To=Vector2.new(bx+bw,by+cy); e.tr_v.Color=col
+    e.bl_h.From=Vector2.new(bx,by+bh); e.bl_h.To=Vector2.new(bx+cx,by+bh); e.bl_h.Color=col
+    e.bl_v.From=Vector2.new(bx,by+bh); e.bl_v.To=Vector2.new(bx,by+bh-cy); e.bl_v.Color=col
+    e.br_h.From=Vector2.new(bx+bw,by+bh); e.br_h.To=Vector2.new(bx+bw-cx,by+bh); e.br_h.Color=col
+    e.br_v.From=Vector2.new(bx+bw,by+bh); e.br_v.To=Vector2.new(bx+bw,by+bh-cy); e.br_v.Color=col
+    for _,k in ipairs(CK) do e[k].Visible = true end
+end
+local function hide_corners(e) for _,k in ipairs(CK) do e[k].Visible = false end end
+
+local function hide_all(e)
+    for k,v in pairs(e) do
+        if k=="sk" then for _,l in ipairs(v) do l.Visible=false end
+        elseif type(v)=="userdata" then v.Visible=false end
+    end
+end
+local function remove_esp(e)
+    for k,v in pairs(e) do
+        if k=="sk" then for _,l in ipairs(v) do l:Remove() end
+        elseif type(v)=="userdata" then pcall(function() v:Remove() end) end
+    end
 end
 
 runservice.RenderStepped:Connect(function()
     if not esp_enabled or not is_alive() then
-        for _, e in pairs(esp_cache) do for _, v in pairs(e) do v.Visible = false end end
-        return
+        for _,e in pairs(esp_cache) do hide_all(e) end; return
     end
-    local target_folder = get_enemy()
-    if not target_folder then return end
+    local ef = get_enemy()
+    if not ef then for _,e in pairs(esp_cache) do hide_all(e) end; return end
+    local vp  = cam.ViewportSize
+    local sbot = Vector2.new(vp.X/2, vp.Y)
     local alive_now = {}
-    for _, v in ipairs(target_folder:GetChildren()) do
-        local hum, root, hd = v:FindFirstChildOfClass("Humanoid"), v:FindFirstChild("HumanoidRootPart"), v:FindFirstChild("Head")
+
+    for _,v in ipairs(ef:GetChildren()) do
+        local hum  = v:FindFirstChildOfClass("Humanoid")
+        local root = v:FindFirstChild("HumanoidRootPart")
+        local hd   = v:FindFirstChild("Head")
         if hum and hum.Health > 0 and root and hd then
             alive_now[v] = true
             if not esp_cache[v] then esp_cache[v] = create_esp_set() end
-            local esp = esp_cache[v]
-            local rp, vis = cam:WorldToViewportPoint(root.Position)
-            local hp_at = cam:WorldToViewportPoint(hd.Position + Vector3.new(0,0.5,0))
-            local lp_at = cam:WorldToViewportPoint(root.Position - Vector3.new(0,3,0))
+            local e = esp_cache[v]
+
+            local rp,  vis = cam:WorldToViewportPoint(root.Position)
+            local top_p    = cam:WorldToViewportPoint(hd.Position  + Vector3.new(0, 0.7, 0))
+            local bot_p    = cam:WorldToViewportPoint(root.Position - Vector3.new(0, 3.1, 0))
+
             if vis then
-                local bh, bw = math.abs(hp_at.Y - lp_at.Y), math.abs(hp_at.Y - lp_at.Y) / 2
-                local dst = math.floor((cam.CFrame.Position - root.Position).Magnitude)
+                local bh  = math.abs(top_p.Y - bot_p.Y)
+                local bw  = bh * 0.55
+                local bx  = rp.X - bw * 0.5
+                local by  = top_p.Y
+                local hpp = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
+                local hcol = hp_gradient(hpp)
+                local dst  = math.floor((cam.CFrame.Position - root.Position).Magnitude)
+                local bcol = (hpp < 0.3) and Color3.fromRGB(255,55,55) or ESP_ACCENT
+
                 if show_box then
-                    esp.box_out.Size = Vector2.new(bw, bh); esp.box_out.Position = Vector2.new(rp.X - bw/2, hp_at.Y); esp.box_out.Visible = true
-                    esp.box.Size = Vector2.new(bw, bh); esp.box.Position = Vector2.new(rp.X - bw/2, hp_at.Y); esp.box.Visible = true
-                else esp.box_out.Visible, esp.box.Visible = false, false end
+                    draw_corners(e, bx, by, bw, bh, bcol)
+                else
+                    hide_corners(e)
+                end
+
+                if show_headdot then
+                    local hd2d = cam:WorldToViewportPoint(hd.Position)
+                    e.head_s.Position = Vector2.new(hd2d.X+1, hd2d.Y+1); e.head_s.Visible = true
+                    e.head.Position   = Vector2.new(hd2d.X,   hd2d.Y);   e.head.Color = ESP_HEAD_COLOR; e.head.Visible = true
+                else
+                    e.head_s.Visible = false; e.head.Visible = false
+                end
+
                 if show_hp then
-                    local hpp, bx = hum.Health/hum.MaxHealth, rp.X - bw/2 - 6
-                    esp.hp_out.From = Vector2.new(bx, hp_at.Y-1); esp.hp_out.To = Vector2.new(bx, hp_at.Y + bh + 1); esp.hp_out.Visible = true
-                    esp.hp_bar.From = Vector2.new(bx, hp_at.Y + bh); esp.hp_bar.To = Vector2.new(bx, hp_at.Y + bh - (bh*hpp)); esp.hp_bar.Color = Color3.new(1-hpp, hpp, 0); esp.hp_bar.Visible = true
-                else esp.hp_out.Visible, esp.hp_bar.Visible = false, false end
-                if show_name then esp.name.Text = v.Name; esp.name.Position = Vector2.new(rp.X, hp_at.Y-20); esp.name.Visible = true else esp.name.Visible = false end
-                if show_dist then esp.dist.Text = "["..dst.."m]"; esp.dist.Position = Vector2.new(rp.X, hp_at.Y+bh+2); esp.dist.Visible = true else esp.dist.Visible = false end
-            else for _, d in pairs(esp) do d.Visible = false end end
+                    local hbx  = bx - 5
+                    local hbot = by + bh
+                    local hmid = hbot - bh * hpp
+                    e.hp_bg.From  = Vector2.new(hbx, by-1);  e.hp_bg.To  = Vector2.new(hbx, hbot+1); e.hp_bg.Visible  = true
+                    e.hp_bar.From = Vector2.new(hbx, hbot);  e.hp_bar.To = Vector2.new(hbx, hmid);
+                    e.hp_bar.Color = hcol;                    e.hp_bar.Visible = true
+                    if show_hptext then
+                        e.hp_txt.Text     = tostring(math.floor(hum.Health))
+                        e.hp_txt.Position = Vector2.new(hbx - 3, hmid - 6)
+                        e.hp_txt.Color    = hcol
+                        e.hp_txt.Visible  = true
+                    else
+                        e.hp_txt.Visible = false
+                    end
+                else
+                    e.hp_bg.Visible=false; e.hp_bar.Visible=false; e.hp_txt.Visible=false
+                end
+
+                if show_name then
+                    e.name.Text = v.Name; e.name.Color = ESP_NAME_COLOR
+                    e.name.Position = Vector2.new(rp.X, by-19); e.name.Visible = true
+                else e.name.Visible = false end
+
+                if show_dist then
+                    local dc = dst<40 and Color3.fromRGB(255,220,60)
+                        or dst<100 and Color3.fromRGB(200,200,200)
+                        or Color3.fromRGB(130,130,130)
+                    e.dist.Text = dst.."m"; e.dist.Color = dc
+                    e.dist.Position = Vector2.new(rp.X, by+bh+3); e.dist.Visible = true
+                else e.dist.Visible = false end
+
+                if show_snap then
+                    local f2d = Vector2.new(bot_p.X, bot_p.Y)
+                    e.snap_s.From = sbot+Vector2.new(1,1); e.snap_s.To = f2d+Vector2.new(1,1); e.snap_s.Visible=true
+                    e.snap.From   = sbot;                  e.snap.To   = f2d;
+                    e.snap.Color  = bcol;                  e.snap.Visible = true
+                else e.snap.Visible=false; e.snap_s.Visible=false end
+
+                if show_skeleton then
+                    local function g2d(pn)
+                        local p = v:FindFirstChild(pn); if not p then return nil end
+                        local s,sv = cam:WorldToViewportPoint(p.Position)
+                        return sv and Vector2.new(s.X,s.Y) or nil
+                    end
+                    local tor = g2d("UpperTorso") or g2d("Torso")
+                    local low = g2d("LowerTorso") or tor
+                    local lsh = g2d("Left Upper Arm")  or g2d("Left Arm")
+                    local rsh = g2d("Right Upper Arm") or g2d("Right Arm")
+                    local lel = g2d("Left Lower Arm")  or lsh
+                    local rel = g2d("Right Lower Arm") or rsh
+                    local bones = {
+                        {g2d("Head"), tor}, {tor, low},
+                        {tor, lsh},  {tor, rsh},
+                        {lsh, lel},  {rsh, rel},
+                        {low, g2d("HumanoidRootPart")},
+                    }
+                    for i,bone in ipairs(bones) do
+                        if bone[1] and bone[2] then
+                            e.sk[i].From=bone[1]; e.sk[i].To=bone[2]; e.sk[i].Visible=true
+                        elseif e.sk[i] then e.sk[i].Visible=false end
+                    end
+                else
+                    for _,l in ipairs(e.sk) do l.Visible=false end
+                end
+            else
+                hide_all(e)
+            end
         end
     end
-    for k, v in pairs(esp_cache) do if not alive_now[k] then for _, d in pairs(v) do d:Remove() end; esp_cache[k] = nil end end
+    for k,e in pairs(esp_cache) do
+        if not alive_now[k] then remove_esp(e); esp_cache[k]=nil end
+    end
 end)
 
-visualbox:AddToggle('esp', { Text = 'esp', Default = false }):OnChanged(function() esp_enabled = toggles.esp.Value end)
-visualbox:AddToggle('esp_b', { Text = 'box', Default = true }):OnChanged(function() show_box = toggles.esp_b.Value end)
-visualbox:AddToggle('esp_h', { Text = 'hp', Default = true }):OnChanged(function() show_hp = toggles.esp_h.Value end)
-visualbox:AddToggle('esp_n', { Text = 'name', Default = true }):OnChanged(function() show_name = toggles.esp_n.Value end)
-visualbox:AddToggle('esp_d', { Text = 'dist', Default = true }):OnChanged(function() show_dist = toggles.esp_d.Value end)
+espbox:AddToggle('esp',    { Text = 'esp',       Default = false }):OnChanged(function() esp_enabled   = toggles.esp.Value    end)
+espbox:AddToggle('esp_b',  { Text = 'box',       Default = true  }):OnChanged(function() show_box      = toggles.esp_b.Value  end)
+espbox:AddColorpicker('esp_box_col', { Text = 'box color', Default = Color3.fromRGB(0,200,255) }):OnChanged(function()
+    ESP_ACCENT = options.esp_box_col.Value
+end)
+espbox:AddToggle('esp_hd', { Text = 'head dot',  Default = true  }):OnChanged(function() show_headdot = toggles.esp_hd.Value end)
+espbox:AddColorpicker('esp_hd_col', { Text = 'head color', Default = Color3.fromRGB(0,200,255) }):OnChanged(function()
+    ESP_HEAD_COLOR = options.esp_hd_col.Value
+end)
+espbox:AddToggle('esp_h',  { Text = 'hp bar',    Default = true  }):OnChanged(function() show_hp       = toggles.esp_h.Value  end)
+espbox:AddToggle('esp_ht', { Text = 'hp number', Default = true  }):OnChanged(function() show_hptext  = toggles.esp_ht.Value end)
+espbox:AddToggle('esp_n',  { Text = 'name',      Default = true  }):OnChanged(function() show_name     = toggles.esp_n.Value  end)
+espbox:AddColorpicker('esp_n_col', { Text = 'name color', Default = Color3.new(1,1,1) }):OnChanged(function()
+    ESP_NAME_COLOR = options.esp_n_col.Value
+end)
+espbox:AddToggle('esp_d',  { Text = 'distance',  Default = true  }):OnChanged(function() show_dist     = toggles.esp_d.Value  end)
+espbox:AddToggle('esp_sn', { Text = 'tracer',    Default = false }):OnChanged(function() show_snap     = toggles.esp_sn.Value end)
+espbox:AddToggle('esp_sk', { Text = 'skeleton',  Default = false }):OnChanged(function() show_skeleton = toggles.esp_sk.Value end)
 
 local antiflash, antismoke = false, false
-visualbox:AddToggle('af', { Text = 'no flsh', Default = false }):OnChanged(function() antiflash = toggles.af.Value end)
-visualbox:AddToggle('as', { Text = 'no smk', Default = false }):OnChanged(function() antismoke = toggles.as.Value end)
+visualbox:AddToggle('af', { Text = 'no flash', Default = false }):OnChanged(function() antiflash = toggles.af.Value end)
+visualbox:AddToggle('as', { Text = 'no smoke', Default = false }):OnChanged(function() antismoke = toggles.as.Value end)
 
 task.spawn(function()
     while task.wait(0.2) do
@@ -706,81 +902,6 @@ plr.CharacterAdded:Connect(function()
     if thirdperson_enabled then set_thirdperson(true) end
 end)
 
-local hitmarker_enabled = false
-local tracer_enabled = false
-
-visualbox:AddToggle('hm', { Text = 'hitmarker', Default = false }):OnChanged(function() hitmarker_enabled = toggles.hm.Value end)
-visualbox:AddToggle('bt', { Text = 'bullet tracer', Default = false }):OnChanged(function() tracer_enabled = toggles.bt.Value end)
-
-local hm_lines = {}
-for i = 1, 4 do
-    local l = Drawing.new("Line")
-    l.Thickness = 2
-    l.Color = Color3.fromRGB(255, 50, 50)
-    l.Transparency = 1
-    l.Visible = false
-    hm_lines[i] = l
-end
-
-local function show_hitmarker()
-    if not hitmarker_enabled then return end
-    local c = Vector2.new(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2)
-    local s = 10
-    local g = 4
-    local defs = {
-        {Vector2.new(-s-g, -s-g), Vector2.new(-g, -g)},
-        {Vector2.new( s+g, -s-g), Vector2.new( g, -g)},
-        {Vector2.new(-s-g,  s+g), Vector2.new(-g,  g)},
-        {Vector2.new( s+g,  s+g), Vector2.new( g,  g)},
-    }
-    for i, l in ipairs(hm_lines) do
-        l.From = c + defs[i][1]
-        l.To   = c + defs[i][2]
-        l.Visible = true
-    end
-    task.delay(0.12, function()
-        for _, l in ipairs(hm_lines) do l.Visible = false end
-    end)
-end
-
-local function spawn_tracer(origin_pos, hit_pos)
-    if not tracer_enabled then return end
-    local line = Drawing.new("Line")
-    line.Thickness = 1.5
-    line.Color = Color3.fromRGB(255, 220, 80)
-    line.Transparency = 1
-    line.Visible = true
-    local vp = cam.ViewportSize
-    line.From = Vector2.new(vp.X / 2, vp.Y / 2)
-    local h2d, hv = cam:WorldToViewportPoint(hit_pos)
-    line.To = hv and Vector2.new(h2d.X, h2d.Y) or Vector2.new(vp.X / 2, 0)
-    task.delay(0.25, function() line:Remove() end)
-end
-
-local function do_raycast_and_fire()
-    if not is_alive() then return end
-    local char = plr.Character
-    if not char then return end
-    local ray = cam:ViewportPointToRay(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2)
-    local params = RaycastParams.new()
-    params.FilterType = Enum.RaycastFilterType.Exclude
-    params.FilterDescendantsInstances = {char, cam}
-    local res = workspace_svc:Raycast(ray.Origin, ray.Direction * 2000, params)
-    local hit_pos = res and res.Position or (ray.Origin + ray.Direction * 2000)
-    spawn_tracer(ray.Origin, hit_pos)
-    if res and res.Instance then
-        local m = res.Instance:FindFirstAncestorOfClass("Model")
-        if m and m:FindFirstChildOfClass("Humanoid") then show_hitmarker() end
-    end
-end
-
-inputservice.InputBegan:Connect(function(i, gp)
-    if gp then return end
-    if i.UserInputType == Enum.UserInputType.MouseButton1 then
-        task.spawn(do_raycast_and_fire)
-    end
-end)
-
 local stretch_enabled = false
 local stretch_res = 0.80
 
@@ -849,4 +970,302 @@ runservice.Heartbeat:Connect(function()
         motion_blur_fx.Size = 0
     end
     last_look = cam.CFrame.LookVector
+end)
+
+-- ─── FPS COUNTER ────────────────────────────────────────────────────────────
+local fps_enabled    = true
+local fps_position   = "Top Left"
+local fps_val        = 0
+local fps_frames     = 0
+local fps_timer      = 0
+
+local fps_draw = Drawing.new("Text")
+fps_draw.Size        = 15
+fps_draw.Color       = Color3.fromRGB(0, 200, 255)
+fps_draw.Outline     = true
+fps_draw.OutlineColor = Color3.new(0, 0, 0)
+fps_draw.Font        = Drawing.Fonts.Monospace
+fps_draw.Visible     = false
+
+local FPS_PADDING = 8
+local function fps_anchor()
+    local vp = cam.ViewportSize
+    if fps_position == "Top Left"     then return Vector2.new(FPS_PADDING, FPS_PADDING) end
+    if fps_position == "Top Right"    then fps_draw.Center = false; return Vector2.new(vp.X - 80, FPS_PADDING) end
+    if fps_position == "Bottom Left"  then return Vector2.new(FPS_PADDING, vp.Y - 24) end
+    if fps_position == "Bottom Right" then return Vector2.new(vp.X - 80, vp.Y - 24) end
+    return Vector2.new(FPS_PADDING, FPS_PADDING)
+end
+
+runservice.RenderStepped:Connect(function(dt)
+    fps_frames = fps_frames + 1
+    fps_timer  = fps_timer  + dt
+    if fps_timer >= 0.5 then
+        fps_val    = math.floor(fps_frames / fps_timer)
+        fps_frames = 0
+        fps_timer  = 0
+    end
+    if fps_enabled then
+        local col
+        if fps_val >= 100 then
+            col = Color3.fromRGB(0, 230, 80)
+        elseif fps_val >= 60 then
+            col = Color3.fromRGB(255, 220, 50)
+        else
+            col = Color3.fromRGB(255, 60, 60)
+        end
+        fps_draw.Text     = "FPS  " .. tostring(fps_val)
+        fps_draw.Color    = col
+        fps_draw.Position = fps_anchor()
+        fps_draw.Visible  = true
+    else
+        fps_draw.Visible = false
+    end
+end)
+
+fpsbox:AddToggle('fps_on', { Text = 'fps counter', Default = true }):OnChanged(function()
+    fps_enabled = toggles.fps_on.Value
+end)
+fpsbox:AddDropdown('fps_pos', {
+    Text    = 'position',
+    Values  = {"Top Left", "Top Right", "Bottom Left", "Bottom Right"},
+    Default = "Top Left",
+}):OnChanged(function()
+    fps_position = options.fps_pos.Value
+end)
+
+-- ─── WATERMARK ───────────────────────────────────────────────────────────────
+local wm_enabled = true
+
+local wm_bg = Drawing.new("Square")
+wm_bg.Filled      = true
+wm_bg.Color       = Color3.fromRGB(8, 8, 8)
+wm_bg.Transparency = 0.45
+wm_bg.Visible     = false
+
+local wm_accent = Drawing.new("Line")
+wm_accent.Thickness = 2
+wm_accent.Color     = Color3.fromRGB(0, 200, 255)
+wm_accent.Visible   = false
+
+local wm_text = Drawing.new("Text")
+wm_text.Text    = "Xeioa"
+wm_text.Size    = 15
+wm_text.Color   = Color3.new(1, 1, 1)
+wm_text.Outline = true
+wm_text.Font    = Drawing.Fonts.UI
+wm_text.Visible = false
+
+local wm_sub = Drawing.new("Text")
+wm_sub.Size    = 11
+wm_sub.Color   = Color3.fromRGB(0, 200, 255)
+wm_sub.Outline = true
+wm_sub.Font    = Drawing.Fonts.Monospace
+wm_sub.Visible = false
+
+local WM_X, WM_Y, WM_W, WM_H = 8, 8, 110, 32
+
+runservice.RenderStepped:Connect(function()
+    if not wm_enabled then
+        wm_bg.Visible     = false
+        wm_accent.Visible = false
+        wm_text.Visible   = false
+        wm_sub.Visible    = false
+        return
+    end
+    wm_bg.Size     = Vector2.new(WM_W, WM_H)
+    wm_bg.Position = Vector2.new(WM_X, WM_Y)
+    wm_bg.Visible  = true
+
+    wm_accent.From    = Vector2.new(WM_X, WM_Y + WM_H)
+    wm_accent.To      = Vector2.new(WM_X + WM_W, WM_Y + WM_H)
+    wm_accent.Visible = true
+
+    wm_text.Position = Vector2.new(WM_X + 8, WM_Y + 5)
+    wm_text.Visible  = true
+
+    local ping = math.floor(players.LocalPlayer:GetNetworkPing() * 1000)
+    wm_sub.Text     = tostring(fps_val) .. " fps  |  " .. tostring(ping) .. " ms"
+    wm_sub.Position = Vector2.new(WM_X + 8, WM_Y + 19)
+    wm_sub.Visible  = true
+end)
+
+uibox:AddToggle('wm_on', { Text = 'watermark', Default = true }):OnChanged(function()
+    wm_enabled = toggles.wm_on.Value
+end)
+
+-- ─── CROSSHAIR ───────────────────────────────────────────────────────────────
+local ch_enabled = false
+local ch_size    = 8
+local ch_gap     = 4
+local ch_thick   = 1.5
+local ch_color   = Color3.fromRGB(0, 200, 255)
+local ch_dot     = false
+
+local CH_LINES = {}
+for i = 1, 4 do
+    local l = Drawing.new("Line")
+    l.Thickness = ch_thick
+    l.Color     = ch_color
+    l.Visible   = false
+    CH_LINES[i] = l
+end
+local ch_dot_draw = Drawing.new("Circle")
+ch_dot_draw.Radius  = 2
+ch_dot_draw.Color   = ch_color
+ch_dot_draw.Filled  = true
+ch_dot_draw.Visible = false
+
+local CH_SHADOW = {}
+for i = 1, 4 do
+    local l = Drawing.new("Line")
+    l.Thickness = ch_thick + 1.5
+    l.Color     = Color3.new(0,0,0)
+    l.Visible   = false
+    CH_SHADOW[i] = l
+end
+local ch_dot_shadow = Drawing.new("Circle")
+ch_dot_shadow.Radius  = 3
+ch_dot_shadow.Color   = Color3.new(0,0,0)
+ch_dot_shadow.Filled  = true
+ch_dot_shadow.Visible = false
+
+runservice.RenderStepped:Connect(function()
+    if not ch_enabled then
+        for i = 1, 4 do CH_LINES[i].Visible = false; CH_SHADOW[i].Visible = false end
+        ch_dot_draw.Visible = false; ch_dot_shadow.Visible = false
+        return
+    end
+    local c = get_screen_center()
+    local s, g = ch_size, ch_gap
+    local dirs = {
+        {Vector2.new(-s-g, 0), Vector2.new(-g, 0)},
+        {Vector2.new( s+g, 0), Vector2.new( g, 0)},
+        {Vector2.new(0, -s-g), Vector2.new(0, -g)},
+        {Vector2.new(0,  s+g), Vector2.new(0,  g)},
+    }
+    for i, d in ipairs(dirs) do
+        CH_SHADOW[i].From = c + d[1]; CH_SHADOW[i].To = c + d[2]; CH_SHADOW[i].Color = Color3.new(0,0,0); CH_SHADOW[i].Visible = true
+        CH_LINES[i].From  = c + d[1]; CH_LINES[i].To  = c + d[2]; CH_LINES[i].Color  = ch_color;          CH_LINES[i].Visible  = true
+    end
+    if ch_dot then
+        ch_dot_shadow.Position = c; ch_dot_shadow.Visible = true
+        ch_dot_draw.Position   = c; ch_dot_draw.Color = ch_color; ch_dot_draw.Visible = true
+    else
+        ch_dot_shadow.Visible = false; ch_dot_draw.Visible = false
+    end
+end)
+
+uibox:AddToggle('ch_on', { Text = 'crosshair', Default = false }):OnChanged(function()
+    ch_enabled = toggles.ch_on.Value
+end)
+uibox:AddToggle('ch_dot', { Text = 'center dot', Default = false }):OnChanged(function()
+    ch_dot = toggles.ch_dot.Value
+end)
+uibox:AddSlider('ch_sz', { Text = 'size', Default = 8, Min = 2, Max = 20, Rounding = 0 }):OnChanged(function()
+    ch_size = options.ch_sz.Value
+end)
+uibox:AddSlider('ch_gp', { Text = 'gap', Default = 4, Min = 0, Max = 12, Rounding = 0 }):OnChanged(function()
+    ch_gap = options.ch_gp.Value
+end)
+uibox:AddSlider('ch_th', { Text = 'thickness', Default = 2, Min = 1, Max = 5, Rounding = 0 }):OnChanged(function()
+    ch_thick = options.ch_th.Value
+    for i = 1,4 do CH_LINES[i].Thickness = ch_thick end
+end)
+uibox:AddDropdown('ch_col', {
+    Text    = 'color',
+    Values  = {"Cyan", "White", "Green", "Red", "Yellow", "Purple"},
+    Default = "Cyan",
+}):OnChanged(function()
+    local map = {
+        Cyan   = Color3.fromRGB(0,200,255),
+        White  = Color3.new(1,1,1),
+        Green  = Color3.fromRGB(0,230,80),
+        Red    = Color3.fromRGB(255,55,55),
+        Yellow = Color3.fromRGB(255,220,50),
+        Purple = Color3.fromRGB(180,80,255),
+    }
+    ch_color = map[options.ch_col.Value] or Color3.fromRGB(0,200,255)
+end)
+
+local lighting_svc = game:GetService("Lighting")
+local custom_sky_enabled = false
+local sky_instance = nil
+local sky_atm_instance = nil
+
+local sky_presets = {
+    ["Clear Day"]  = { Brightness=2,   Ambient=Color3.fromRGB(80,80,90),    FogEnd=3000, FogColor=Color3.fromRGB(192,224,255), ClockTime=14 },
+    ["Night"]      = { Brightness=0.2, Ambient=Color3.fromRGB(20,20,40),    FogEnd=600,  FogColor=Color3.fromRGB(10,10,30),   ClockTime=0  },
+    ["Sunset"]     = { Brightness=1.4, Ambient=Color3.fromRGB(130,80,50),   FogEnd=900,  FogColor=Color3.fromRGB(255,140,70), ClockTime=18 },
+    ["Storm"]      = { Brightness=0.4, Ambient=Color3.fromRGB(50,50,60),    FogEnd=250,  FogColor=Color3.fromRGB(70,70,90),   ClockTime=12 },
+    ["Neon Night"] = { Brightness=0.1, Ambient=Color3.fromRGB(15,10,35),    FogEnd=400,  FogColor=Color3.fromRGB(30,0,60),    ClockTime=1  },
+}
+
+local orig_lighting = {
+    Brightness = lighting_svc.Brightness,
+    Ambient    = lighting_svc.Ambient,
+    FogEnd     = lighting_svc.FogEnd,
+    FogColor   = lighting_svc.FogColor,
+    ClockTime  = lighting_svc.ClockTime,
+}
+
+local function apply_sky(preset_name)
+    local p = sky_presets[preset_name]
+    if not p then return end
+    lighting_svc.Brightness = p.Brightness
+    lighting_svc.Ambient    = p.Ambient
+    lighting_svc.FogEnd     = p.FogEnd
+    lighting_svc.FogColor   = p.FogColor
+    lighting_svc.ClockTime  = p.ClockTime
+end
+
+local function restore_sky()
+    lighting_svc.Brightness = orig_lighting.Brightness
+    lighting_svc.Ambient    = orig_lighting.Ambient
+    lighting_svc.FogEnd     = orig_lighting.FogEnd
+    lighting_svc.FogColor   = orig_lighting.FogColor
+    lighting_svc.ClockTime  = orig_lighting.ClockTime
+end
+
+skybox_grp:AddToggle('csky', { Text = 'custom sky', Default = false }):OnChanged(function()
+    custom_sky_enabled = toggles.csky.Value
+    if custom_sky_enabled then
+        apply_sky(options.sky_preset.Value)
+    else
+        restore_sky()
+    end
+end)
+
+skybox_grp:AddDropdown('sky_preset', {
+    Text    = 'preset',
+    Values  = {"Clear Day", "Night", "Sunset", "Storm", "Neon Night"},
+    Default = "Clear Day",
+}):OnChanged(function()
+    if custom_sky_enabled then
+        apply_sky(options.sky_preset.Value)
+    end
+end)
+
+skybox_grp:AddColorpicker('sky_fog_col', { Text = 'fog color', Default = Color3.fromRGB(192,224,255) }):OnChanged(function()
+    if custom_sky_enabled then
+        lighting_svc.FogColor = options.sky_fog_col.Value
+    end
+end)
+
+skybox_grp:AddSlider('sky_fog_end', { Text = 'fog distance', Default = 3000, Min = 50, Max = 5000, Rounding = 0 }):OnChanged(function()
+    if custom_sky_enabled then
+        lighting_svc.FogEnd = options.sky_fog_end.Value
+    end
+end)
+
+skybox_grp:AddSlider('sky_bright', { Text = 'brightness', Default = 200, Min = 0, Max = 500, Rounding = 0 }):OnChanged(function()
+    if custom_sky_enabled then
+        lighting_svc.Brightness = options.sky_bright.Value / 100
+    end
+end)
+
+skybox_grp:AddSlider('sky_time', { Text = 'time of day', Default = 14, Min = 0, Max = 24, Rounding = 0 }):OnChanged(function()
+    if custom_sky_enabled then
+        lighting_svc.ClockTime = options.sky_time.Value
+    end
 end)
