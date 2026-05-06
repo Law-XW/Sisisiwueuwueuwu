@@ -525,6 +525,7 @@ end)
 local ESP_ACCENT    = Color3.fromRGB(0, 200, 255)
 local esp_enabled   = false
 local show_box      = true
+local show_fill     = false
 local show_name     = true
 local show_hp       = true
 local show_hptext   = true
@@ -551,13 +552,10 @@ local function ns(col, transp)
 end
 
 local function create_esp_set()
-    local blk = Color3.new(0,0,0)
     local e = {
-        -- corner bracket box (shadow + color, 4 corners × 2 lines each)
-        tl_h_s=nl(2,blk), tl_v_s=nl(2,blk), tr_h_s=nl(2,blk), tr_v_s=nl(2,blk),
-        bl_h_s=nl(2,blk), bl_v_s=nl(2,blk), br_h_s=nl(2,blk), br_v_s=nl(2,blk),
-        tl_h=nl(1.5), tl_v=nl(1.5), tr_h=nl(1.5), tr_v=nl(1.5),
-        bl_h=nl(1.5), bl_v=nl(1.5), br_h=nl(1.5), br_v=nl(1.5),
+        -- corner bracket box (4 corners × 2 lines, no outlines)
+        tl_h=nl(2), tl_v=nl(2), tr_h=nl(2), tr_v=nl(2),
+        bl_h=nl(2), bl_v=nl(2), br_h=nl(2), br_v=nl(2),
         -- health bar (bg track + 3 gradient segments + text)
         hp_bg   = nl(4, Color3.fromRGB(10,10,10)),
         hp_bar1 = nl(2.5, Color3.fromRGB(0,230,80)),
@@ -591,26 +589,15 @@ local function hp_gradient(p)
     else return Color3.new(1, p*2, 0) end
 end
 
-local CK = {
-    "tl_h","tl_v","tr_h","tr_v","bl_h","bl_v","br_h","br_v",
-    "tl_h_s","tl_v_s","tr_h_s","tr_v_s","bl_h_s","bl_v_s","br_h_s","br_v_s",
-}
+local CK = { "tl_h","tl_v","tr_h","tr_v","bl_h","bl_v","br_h","br_v" }
 local function draw_corners(e, bx, by, bw, bh, col)
-    local cx, cy, o = bw*0.28, bh*0.22, 1
-    e.tl_h_s.From=Vector2.new(bx-o,by-o);       e.tl_h_s.To=Vector2.new(bx+cx,by-o)
-    e.tl_v_s.From=Vector2.new(bx-o,by-o);       e.tl_v_s.To=Vector2.new(bx-o,by+cy)
-    e.tr_h_s.From=Vector2.new(bx+bw+o,by-o);    e.tr_h_s.To=Vector2.new(bx+bw-cx,by-o)
-    e.tr_v_s.From=Vector2.new(bx+bw+o,by-o);    e.tr_v_s.To=Vector2.new(bx+bw+o,by+cy)
-    e.bl_h_s.From=Vector2.new(bx-o,by+bh+o);    e.bl_h_s.To=Vector2.new(bx+cx,by+bh+o)
-    e.bl_v_s.From=Vector2.new(bx-o,by+bh+o);    e.bl_v_s.To=Vector2.new(bx-o,by+bh-cy)
-    e.br_h_s.From=Vector2.new(bx+bw+o,by+bh+o); e.br_h_s.To=Vector2.new(bx+bw-cx,by+bh+o)
-    e.br_v_s.From=Vector2.new(bx+bw+o,by+bh+o); e.br_v_s.To=Vector2.new(bx+bw+o,by+bh-cy)
-    e.tl_h.From=Vector2.new(bx,by);     e.tl_h.To=Vector2.new(bx+cx,by);     e.tl_h.Color=col
-    e.tl_v.From=Vector2.new(bx,by);     e.tl_v.To=Vector2.new(bx,by+cy);     e.tl_v.Color=col
-    e.tr_h.From=Vector2.new(bx+bw,by);  e.tr_h.To=Vector2.new(bx+bw-cx,by);  e.tr_h.Color=col
-    e.tr_v.From=Vector2.new(bx+bw,by);  e.tr_v.To=Vector2.new(bx+bw,by+cy);  e.tr_v.Color=col
-    e.bl_h.From=Vector2.new(bx,by+bh);  e.bl_h.To=Vector2.new(bx+cx,by+bh);  e.bl_h.Color=col
-    e.bl_v.From=Vector2.new(bx,by+bh);  e.bl_v.To=Vector2.new(bx,by+bh-cy);  e.bl_v.Color=col
+    local cx, cy = bw * 0.25, bh * 0.20
+    e.tl_h.From=Vector2.new(bx,by);       e.tl_h.To=Vector2.new(bx+cx,by);       e.tl_h.Color=col
+    e.tl_v.From=Vector2.new(bx,by);       e.tl_v.To=Vector2.new(bx,by+cy);       e.tl_v.Color=col
+    e.tr_h.From=Vector2.new(bx+bw,by);    e.tr_h.To=Vector2.new(bx+bw-cx,by);    e.tr_h.Color=col
+    e.tr_v.From=Vector2.new(bx+bw,by);    e.tr_v.To=Vector2.new(bx+bw,by+cy);    e.tr_v.Color=col
+    e.bl_h.From=Vector2.new(bx,by+bh);    e.bl_h.To=Vector2.new(bx+cx,by+bh);    e.bl_h.Color=col
+    e.bl_v.From=Vector2.new(bx,by+bh);    e.bl_v.To=Vector2.new(bx,by+bh-cy);    e.bl_v.Color=col
     e.br_h.From=Vector2.new(bx+bw,by+bh); e.br_h.To=Vector2.new(bx+bw-cx,by+bh); e.br_h.Color=col
     e.br_v.From=Vector2.new(bx+bw,by+bh); e.br_v.To=Vector2.new(bx+bw,by+bh-cy); e.br_v.Color=col
     for _,k in ipairs(CK) do e[k].Visible = true end
@@ -654,10 +641,10 @@ runservice.RenderStepped:Connect(function()
             local bot_p    = cam:WorldToViewportPoint(root.Position  - Vector3.new(0, 3.1, 0))
 
             if vis then
-                local bh   = math.abs(top_p.Y - bot_p.Y)
-                local bw   = bh * 0.55
-                local bx   = rp.X - bw * 0.5
-                local by   = top_p.Y
+                local bh   = math.round(math.abs(top_p.Y - bot_p.Y))
+                local bw   = math.round(bh * 0.55)
+                local bx   = math.round(rp.X - bw * 0.5)
+                local by   = math.round(top_p.Y)
                 local hpp  = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
                 local hcol = hp_gradient(hpp)
                 local dst  = math.floor((cam.CFrame.Position - root.Position).Magnitude)
@@ -665,9 +652,13 @@ runservice.RenderStepped:Connect(function()
 
                 -- Box fill + corners
                 if show_box then
-                    e.box_fill.Size     = Vector2.new(bw, bh)
-                    e.box_fill.Position = Vector2.new(bx, by)
-                    e.box_fill.Visible  = true
+                    if show_fill then
+                        e.box_fill.Size     = Vector2.new(bw, bh)
+                        e.box_fill.Position = Vector2.new(bx, by)
+                        e.box_fill.Visible  = true
+                    else
+                        e.box_fill.Visible = false
+                    end
                     draw_corners(e, bx, by, bw, bh, bcol)
                 else
                     e.box_fill.Visible = false
@@ -789,6 +780,7 @@ espbox:AddToggle('esp', { Text = 'ESP', Default = false, Tooltip = 'Master toggl
 espbox:AddDivider()
 espbox:AddLabel("  Overlays")
 espbox:AddToggle('esp_b',  { Text = 'Box',       Default = true,  Tooltip = 'Corner bracket box drawn around each enemy' }):OnChanged(function() show_box      = toggles.esp_b.Value  end)
+espbox:AddToggle('esp_f',  { Text = 'Fill Box',  Default = false, Tooltip = 'Semi-transparent fill inside the corner box' }):OnChanged(function() show_fill     = toggles.esp_f.Value  end)
 espbox:AddToggle('esp_h',  { Text = 'HP Bar',    Default = true,  Tooltip = 'Gradient bar: green → yellow → red by HP' }):OnChanged(function() show_hp       = toggles.esp_h.Value  end)
 espbox:AddToggle('esp_ht', { Text = 'HP Number', Default = true,  Tooltip = 'Shows exact health value beside the bar' }):OnChanged(function() show_hptext   = toggles.esp_ht.Value end)
 espbox:AddToggle('esp_n',  { Text = 'Name',      Default = true,  Tooltip = 'Draws enemy username above the box' }):OnChanged(function() show_name     = toggles.esp_n.Value  end)
