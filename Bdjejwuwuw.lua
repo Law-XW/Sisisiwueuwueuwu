@@ -1,5 +1,7 @@
 local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
-local library = loadstring(game:HttpGet(repo .. "Library.lua"))()
+local library      = loadstring(game:HttpGet(repo .. "Library.lua"))()
+local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
+local SaveManager  = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
 local window = library:CreateWindow({
     Title = "Xeioa",
     Footer = "Xeioa",
@@ -9,13 +11,14 @@ local window = library:CreateWindow({
 })
 
 local toggles = library.Toggles
-local options = library.Options
+local options  = library.Options
 
 local tabs = {
-    combat   = window:AddTab("Combat",   "crosshair"),
-    visuals  = window:AddTab("Visuals",  "eye"),
-    skins    = window:AddTab("Skins",    "swords"),
-    settings = window:AddTab("Settings", "settings"),
+    combat     = window:AddTab("Combat",      "crosshair"),
+    visuals    = window:AddTab("Visuals",     "eye"),
+    skins      = window:AddTab("Skins",       "swords"),
+    settings   = window:AddTab("Settings",    "settings"),
+    uisettings = window:AddTab("UI Settings", "palette"),
 }
 
 -- Groupboxen
@@ -1170,21 +1173,12 @@ uibox:AddToggle('wm_on', { Text = 'Watermark', Default = true, Tooltip = 'Shows 
 end)
 uibox:AddDivider()
 uibox:AddLabel("  ESP Accent")
-uibox:AddDropdown('esp_col', {
-    Text    = 'Color',
-    Values  = {"Cyan", "Green", "Purple", "Orange", "White", "Red"},
-    Default = "Cyan",
+uibox:AddColorPicker('esp_col', {
+    Default = Color3.fromRGB(0, 200, 255),
+    Title   = 'ESP Accent Color',
     Tooltip = 'Accent color for ESP boxes, tracers and glow',
 }):OnChanged(function()
-    local map = {
-        Cyan   = Color3.fromRGB(0,200,255),
-        Green  = Color3.fromRGB(0,230,80),
-        Purple = Color3.fromRGB(180,80,255),
-        Orange = Color3.fromRGB(255,150,30),
-        White  = Color3.new(1,1,1),
-        Red    = Color3.fromRGB(255,55,55),
-    }
-    ESP_ACCENT = map[options.esp_col.Value] or Color3.fromRGB(0,200,255)
+    ESP_ACCENT = options.esp_col.Value
 end)
 
 -- ─── CROSSHAIR ───────────────────────────────────────────────────────────────
@@ -1248,19 +1242,23 @@ chbox:AddSlider('ch_th',  { Text = 'Thickness',  Default = 2,  Min = 1,  Max = 5
     ch_thick = options.ch_th.Value
     for i = 1, 4 do CH_LINES[i].Thickness = ch_thick end
 end)
-chbox:AddDropdown('ch_col', {
-    Text    = 'Color',
-    Values  = {"Cyan", "White", "Green", "Red", "Yellow", "Purple"},
-    Default = "Cyan",
-    Tooltip = 'Color of the crosshair lines',
+chbox:AddColorPicker('ch_col', {
+    Default = Color3.fromRGB(0, 200, 255),
+    Title   = 'Crosshair Color',
+    Tooltip = 'Color of the crosshair lines and dot',
 }):OnChanged(function()
-    local map = {
-        Cyan   = Color3.fromRGB(0,200,255),
-        White  = Color3.new(1,1,1),
-        Green  = Color3.fromRGB(0,230,80),
-        Red    = Color3.fromRGB(255,55,55),
-        Yellow = Color3.fromRGB(255,220,50),
-        Purple = Color3.fromRGB(180,80,255),
-    }
-    ch_color = map[options.ch_col.Value] or Color3.fromRGB(0,200,255)
+    ch_color = options.ch_col.Value
 end)
+
+-- ─── UI SETTINGS TAB ─────────────────────────────────────────────────────────
+local themebox = tabs.uisettings:AddLeftGroupbox("theme", "palette")
+local configbox = tabs.uisettings:AddRightGroupbox("config", "save")
+
+ThemeManager:SetLibrary(library)
+SaveManager:SetLibrary(library)
+
+ThemeManager:SetFolder("Xeioa")
+SaveManager:SetFolder("Xeioa/configs")
+
+ThemeManager:ApplyToGroupbox(themebox)
+SaveManager:BuildConfigSection(configbox)
