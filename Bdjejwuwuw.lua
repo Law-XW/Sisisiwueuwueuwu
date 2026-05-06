@@ -131,15 +131,19 @@ runservice.RenderStepped:Connect(function()
     end
 end)
 
-combatbox:AddToggle('aim',   { Text = 'aim',    Default = false }):OnChanged(function() aim_enabled = toggles.aim.Value   end)
-combatbox:AddToggle('fov',   { Text = 'fov',    Default = false }):OnChanged(function() fov_enabled = toggles.fov.Value   end)
-combatbox:AddSlider('fov_r', { Text = 'fov r',  Default = 100, Min = 10, Max = 500, Rounding = 0 }):OnChanged(function() fov_radius = options.fov_r.Value end)
-combatbox:AddSlider('smth',  { Text = 'smooth', Default = 3,   Min = 1,  Max = 10,  Rounding = 0 }):OnChanged(function() smoothing  = options.smth.Value  end)
+combatbox:AddLabel("  Aimbot")
+combatbox:AddToggle('aim',   { Text = 'Enable',     Default = false, Tooltip = 'Locks onto the nearest enemy head inside FOV' }):OnChanged(function() aim_enabled = toggles.aim.Value   end)
+combatbox:AddToggle('fov',   { Text = 'FOV Circle', Default = false, Tooltip = 'Draws the aimbot range as a circle on screen' }):OnChanged(function() fov_enabled = toggles.fov.Value   end)
+combatbox:AddSlider('fov_r', { Text = 'FOV Radius', Default = 100, Min = 10, Max = 500, Rounding = 0, Tooltip = 'Max pixel distance from cursor to snap-on' }):OnChanged(function() fov_radius = options.fov_r.Value end)
+combatbox:AddSlider('smth',  { Text = 'Smoothing',  Default = 3,   Min = 1,  Max = 10,  Rounding = 0, Tooltip = 'Higher = slower, smoother aim movement' }):OnChanged(function() smoothing  = options.smth.Value  end)
+combatbox:AddDivider()
 
 -- ─── TRIGGERBOT ──────────────────────────────────────────────────────────────
 local trigger_enabled, trigger_delay = false, 0
-combatbox:AddToggle('trig',  { Text = 'triggerbot', Default = false }):OnChanged(function() trigger_enabled = toggles.trig.Value  end)
-combatbox:AddSlider('trig_d',{ Text = 'delay (ms)', Default = 0, Min = 0, Max = 500, Rounding = 0 }):OnChanged(function() trigger_delay = options.trig_d.Value end)
+combatbox:AddLabel("  Triggerbot")
+combatbox:AddToggle('trig',  { Text = 'Enable',    Default = false, Tooltip = 'Auto-fires when crosshair is on an enemy' }):OnChanged(function() trigger_enabled = toggles.trig.Value  end)
+combatbox:AddSlider('trig_d',{ Text = 'Delay (ms)',Default = 0, Min = 0, Max = 500, Rounding = 0, Tooltip = 'Wait time before shooting (milliseconds)' }):OnChanged(function() trigger_delay = options.trig_d.Value end)
+combatbox:AddDivider()
 
 task.spawn(function()
     while task.wait(0.01) do
@@ -168,8 +172,9 @@ end)
 
 -- ─── HITBOX ──────────────────────────────────────────────────────────────────
 local hitbox_enabled, hitbox_size, hb_originals = false, 3, {}
-combatbox:AddToggle('hb',  { Text = 'hitbox',   Default = false }):OnChanged(function() hitbox_enabled = toggles.hb.Value  end)
-combatbox:AddSlider('hb_s',{ Text = 'hitbox sz',Default = 3, Min = 1, Max = 3, Rounding = 1 }):OnChanged(function() hitbox_size = options.hb_s.Value end)
+combatbox:AddLabel("  Misc Combat")
+combatbox:AddToggle('hb',  { Text = 'Hitbox',      Default = false, Tooltip = 'Enlarges enemy head hitbox' }):OnChanged(function() hitbox_enabled = toggles.hb.Value  end)
+combatbox:AddSlider('hb_s',{ Text = 'Hitbox Size', Default = 3, Min = 1, Max = 3, Rounding = 1, Tooltip = 'Scale multiplier for enemy head hitbox' }):OnChanged(function() hitbox_size = options.hb_s.Value end)
 
 task.spawn(function()
     while task.wait(0.5) do
@@ -194,7 +199,7 @@ end)
 
 -- ─── BHOP ────────────────────────────────────────────────────────────────────
 local bhop_enabled = false
-combatbox:AddToggle('bhop', { Text = 'bhop', Default = false }):OnChanged(function() bhop_enabled = toggles.bhop.Value end)
+combatbox:AddToggle('bhop', { Text = 'BHop',      Default = false, Tooltip = 'Auto-jumps while holding Space to bunny hop' }):OnChanged(function() bhop_enabled = toggles.bhop.Value end)
 runservice.RenderStepped:Connect(function()
     if bhop_enabled and inputservice:IsKeyDown(Enum.KeyCode.Space) and is_alive() and plr.Character then
         local h = plr.Character:FindFirstChildOfClass("Humanoid")
@@ -206,7 +211,8 @@ end)
 
 -- ─── NO RECOIL ───────────────────────────────────────────────────────────────
 local norecoil_enabled = false
-combatbox:AddToggle('nr', { Text = 'no recoil', Default = false }):OnChanged(function() norecoil_enabled = toggles.nr.Value end)
+combatbox:AddToggle('nr', { Text = 'No Recoil', Default = false, Tooltip = 'Removes weapon recoil on every shot' }):OnChanged(function() norecoil_enabled = toggles.nr.Value end)
+combatbox:AddDivider()
 
 task.spawn(function()
     while task.wait(0.5) do
@@ -235,7 +241,8 @@ local wallbang_keywords = {
     "door3_low","cylinder.006"
 }
 
-combatbox:AddToggle('wb', { Text = 'wallbang', Default = false }):OnChanged(function()
+combatbox:AddLabel("  Wallbang")
+combatbox:AddToggle('wb', { Text = 'Enable', Default = false, Tooltip = 'Makes common map objects shoot-through' }):OnChanged(function()
     wallbang_enabled = toggles.wb.Value
     for _, v in ipairs(workspace_svc:GetDescendants()) do
         if v:IsA("BasePart") then
@@ -251,14 +258,14 @@ combatbox:AddToggle('wb', { Text = 'wallbang', Default = false }):OnChanged(func
     end
 end)
 
-combatbox:AddButton('wallbang_destroy', function()
+combatbox:AddButton({ Text = 'Destroy Objects', Tooltip = 'Permanently removes all wallbang objects from the map', Func = function()
     for _, v in ipairs(workspace_svc:GetDescendants()) do
         local name = string.lower(v.Name)
         for _, kw in ipairs(wallbang_keywords) do
             if string.find(name, kw, 1, true) then v:Destroy(); break end
         end
     end
-end)
+end })
 
 -- ─── KNIFE VM ────────────────────────────────────────────────────────────────
 local knife_enabled, knife_selected, spawned, inspecting, swinging, last_atk = false, "Butterfly Knife", false, false, false, 0
@@ -443,19 +450,20 @@ local function apply_skin_to_model(m)
     end)
 end
 
-skinbox:AddToggle('skin_on', { Text = 'skins', Default = false }):OnChanged(function()
+skinbox:AddLabel("  Weapon Skins")
+skinbox:AddToggle('skin_on', { Text = 'Enable Skins', Default = false, Tooltip = 'Applies selected skins to your weapons in first-person' }):OnChanged(function()
     skins_enabled = toggles.skin_on.Value
     if not skins_enabled then for _, o in cam:GetChildren() do o:SetAttribute("SkinApplied", nil) end end
 end)
 
-skinbox:AddButton('rnd_skin', function()
+skinbox:AddButton({ Text = 'Random Skin', Tooltip = 'Picks a random skin for every weapon slot', Func = function()
     for w_n, o_l in pairs(skin_options) do
         if #o_l > 0 then
             local r_s = o_l[math.random(1, #o_l)]
             if skin_drops[w_n] then selected_skins[w_n] = r_s; options["Skin_"..w_n]:SetValue(r_s) end
         end
     end
-end)
+end })
 
 local function build_skin_dropdown(w_n)
     local f = skins_folder:FindFirstChild(w_n)
@@ -472,11 +480,13 @@ local function build_skin_dropdown(w_n)
     skin_drops[w_n] = d
 end
 
-skinbox:AddToggle('knf_on',  { Text = 'knife',  Default = false }):OnChanged(function()
+skinbox:AddDivider()
+skinbox:AddLabel("  Knife Viewmodel")
+skinbox:AddToggle('knf_on',  { Text = 'Enable',     Default = false, Tooltip = 'Shows a knife in first-person view' }):OnChanged(function()
     knife_enabled = toggles.knf_on.Value
     if not knife_enabled then remove_vm() end
 end)
-skinbox:AddDropdown('knf_sel', { Text = 'knives', Values = {"Butterfly Knife","Karambit","M9 Bayonet","Flip Knife","Gut Knife"}, Default = "Butterfly Knife" }):OnChanged(function()
+skinbox:AddDropdown('knf_sel', { Text = 'Knife Model', Values = {"Butterfly Knife","Karambit","M9 Bayonet","Flip Knife","Gut Knife"}, Default = "Butterfly Knife", Tooltip = 'Select which knife to display' }):OnChanged(function()
     knife_selected = options.knf_sel.Value
     if spawned then remove_vm() end
 end)
@@ -551,6 +561,8 @@ local function create_esp_set()
         hp_bar2 = nl(2.5, Color3.fromRGB(255,220,50)),
         hp_bar3 = nl(2.5, Color3.fromRGB(255,55,55)),
         hp_txt  = nt(11, Color3.new(1,1,1), false),
+        -- subtle transparent box fill
+        box_fill = ns(Color3.fromRGB(0, 5, 10), 0.87),
         -- name tag (background pill + text)
         name_bg = ns(Color3.fromRGB(5,5,8), 0.35),
         name    = nt(13, Color3.new(1,1,1), true),
@@ -648,8 +660,16 @@ runservice.RenderStepped:Connect(function()
                 local dst  = math.floor((cam.CFrame.Position - root.Position).Magnitude)
                 local bcol = (hpp < 0.3) and Color3.fromRGB(255,55,55) or ESP_ACCENT
 
-                -- Box
-                if show_box then draw_corners(e, bx, by, bw, bh, bcol) else hide_corners(e) end
+                -- Box fill + corners
+                if show_box then
+                    e.box_fill.Size     = Vector2.new(bw, bh)
+                    e.box_fill.Position = Vector2.new(bx, by)
+                    e.box_fill.Visible  = true
+                    draw_corners(e, bx, by, bw, bh, bcol)
+                else
+                    e.box_fill.Visible = false
+                    hide_corners(e)
+                end
 
                 -- Health bar (3-segment gradient: green → yellow → red)
                 if show_hp then
@@ -761,20 +781,26 @@ runservice.RenderStepped:Connect(function()
     end
 end)
 
--- ESP Groupbox (Visuals tab, links)
-espbox:AddToggle('esp',    { Text = 'esp',      Default = false }):OnChanged(function() esp_enabled   = toggles.esp.Value    end)
-espbox:AddToggle('esp_b',  { Text = 'box',      Default = true  }):OnChanged(function() show_box      = toggles.esp_b.Value  end)
-espbox:AddToggle('esp_h',  { Text = 'hp bar',   Default = true  }):OnChanged(function() show_hp       = toggles.esp_h.Value  end)
-espbox:AddToggle('esp_ht', { Text = 'hp number',Default = true  }):OnChanged(function() show_hptext   = toggles.esp_ht.Value end)
-espbox:AddToggle('esp_n',  { Text = 'name',     Default = true  }):OnChanged(function() show_name     = toggles.esp_n.Value  end)
-espbox:AddToggle('esp_d',  { Text = 'distance', Default = true  }):OnChanged(function() show_dist     = toggles.esp_d.Value  end)
-espbox:AddToggle('esp_sn', { Text = 'tracer',   Default = false }):OnChanged(function() show_snap     = toggles.esp_sn.Value end)
-espbox:AddToggle('esp_sk', { Text = 'skeleton', Default = false }):OnChanged(function() show_skeleton = toggles.esp_sk.Value end)
+-- ESP Groupbox (Visuals tab)
+espbox:AddToggle('esp', { Text = 'ESP', Default = false, Tooltip = 'Master toggle — enables all ESP elements' }):OnChanged(function() esp_enabled = toggles.esp.Value end)
+espbox:AddDivider()
+espbox:AddLabel("  Overlays")
+espbox:AddToggle('esp_b',  { Text = 'Box',       Default = true,  Tooltip = 'Corner bracket box drawn around each enemy' }):OnChanged(function() show_box      = toggles.esp_b.Value  end)
+espbox:AddToggle('esp_h',  { Text = 'HP Bar',    Default = true,  Tooltip = 'Gradient bar: green → yellow → red by HP' }):OnChanged(function() show_hp       = toggles.esp_h.Value  end)
+espbox:AddToggle('esp_ht', { Text = 'HP Number', Default = true,  Tooltip = 'Shows exact health value beside the bar' }):OnChanged(function() show_hptext   = toggles.esp_ht.Value end)
+espbox:AddToggle('esp_n',  { Text = 'Name',      Default = true,  Tooltip = 'Draws enemy username above the box' }):OnChanged(function() show_name     = toggles.esp_n.Value  end)
+espbox:AddToggle('esp_d',  { Text = 'Distance',  Default = true,  Tooltip = 'Studs distance shown below the box' }):OnChanged(function() show_dist     = toggles.esp_d.Value  end)
+espbox:AddDivider()
+espbox:AddLabel("  Extras")
+espbox:AddToggle('esp_sn', { Text = 'Tracer',    Default = false, Tooltip = 'Snap line from screen bottom to enemy feet' }):OnChanged(function() show_snap     = toggles.esp_sn.Value end)
+espbox:AddToggle('esp_sk', { Text = 'Skeleton',  Default = false, Tooltip = 'Draws bone connections on each enemy' }):OnChanged(function() show_skeleton = toggles.esp_sk.Value end)
 
 -- ─── MISC VISUALS (rechte Groupbox im Visuals Tab) ───────────────────────────
 local antiflash, antismoke = false, false
-miscbox:AddToggle('af', { Text = 'no flash', Default = false }):OnChanged(function() antiflash = toggles.af.Value end)
-miscbox:AddToggle('as', { Text = 'no smoke', Default = false }):OnChanged(function() antismoke = toggles.as.Value end)
+miscbox:AddLabel("  Effects")
+miscbox:AddToggle('af', { Text = 'No Flash', Default = false, Tooltip = 'Blocks flashbang blindness' }):OnChanged(function() antiflash = toggles.af.Value end)
+miscbox:AddToggle('as', { Text = 'No Smoke', Default = false, Tooltip = 'Removes smoke grenade clouds from the map' }):OnChanged(function() antismoke = toggles.as.Value end)
+miscbox:AddDivider()
 
 task.spawn(function()
     while task.wait(0.2) do
@@ -806,9 +832,11 @@ local antiaim_mode = "Spin"
 local antiaim_angle = 0
 local antiaim_spin_speed = 10
 
-miscbox:AddToggle('aa',     { Text = 'anti aim', Default = false }):OnChanged(function() antiaim_enabled = toggles.aa.Value end)
-miscbox:AddDropdown('aa_mode', { Text = 'aa mode', Values = {"Spin","Jitter","Down","Up"}, Default = "Spin" }):OnChanged(function() antiaim_mode = options.aa_mode.Value end)
-miscbox:AddSlider('aa_spd', { Text = 'spin speed', Default = 10, Min = 1, Max = 30, Rounding = 0 }):OnChanged(function() antiaim_spin_speed = options.aa_spd.Value end)
+miscbox:AddLabel("  Anti-Aim")
+miscbox:AddToggle('aa',     { Text = 'Enable',     Default = false, Tooltip = 'Randomizes body rotation to confuse enemies' }):OnChanged(function() antiaim_enabled = toggles.aa.Value end)
+miscbox:AddDropdown('aa_mode', { Text = 'Mode',    Values = {"Spin","Jitter","Down","Up"}, Default = "Spin", Tooltip = 'Which anti-aim style to apply' }):OnChanged(function() antiaim_mode = options.aa_mode.Value end)
+miscbox:AddSlider('aa_spd', { Text = 'Spin Speed', Default = 10, Min = 1, Max = 30, Rounding = 0, Tooltip = 'Degrees per tick for Spin mode' }):OnChanged(function() antiaim_spin_speed = options.aa_spd.Value end)
+miscbox:AddDivider()
 
 local aa_conn = nil
 local function get_neck_joint()
@@ -886,17 +914,19 @@ runservice.RenderStepped:Connect(function()
     if thirdperson_enabled and plr.Character then set_char_visible(true); hide_viewmodel() end
 end)
 
-miscbox:AddToggle('tp', { Text = '3rd person', Default = false }):OnChanged(function()
+miscbox:AddLabel("  Camera")
+miscbox:AddToggle('tp', { Text = '3rd Person', Default = false, Tooltip = 'Switches to a third-person camera view' }):OnChanged(function()
     thirdperson_enabled = toggles.tp.Value
     set_thirdperson(thirdperson_enabled)
 end)
-miscbox:AddSlider('tp_dist', { Text = 'tp distance', Default = 10, Min = 3, Max = 30, Rounding = 0 }):OnChanged(function()
+miscbox:AddSlider('tp_dist', { Text = 'Camera Distance', Default = 10, Min = 3, Max = 30, Rounding = 0, Tooltip = 'How far behind your character the camera sits' }):OnChanged(function()
     tp_distance = options.tp_dist.Value
     if thirdperson_enabled and plr.Character then
         local hum = plr.Character:FindFirstChildOfClass("Humanoid")
         if hum then hum.CameraOffset = Vector3.new(0, 0, tp_distance) end
     end
 end)
+miscbox:AddDivider()
 
 plr.CharacterAdded:Connect(function()
     task.wait(0.5)
@@ -907,15 +937,17 @@ end)
 local stretch_enabled = false
 local stretch_res = 0.80
 
-miscbox:AddToggle('stretch', { Text = 'stretched', Default = false }):OnChanged(function()
+miscbox:AddLabel("  Resolution")
+miscbox:AddToggle('stretch', { Text = 'Stretched Res', Default = false, Tooltip = 'Vertically squishes the camera projection' }):OnChanged(function()
     stretch_enabled = toggles.stretch.Value
     if not stretch_enabled then
         cam.CFrame = cam.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1)
     end
 end)
-miscbox:AddSlider('stretch_r', { Text = 'stretch res', Default = 80, Min = 50, Max = 99, Rounding = 0 }):OnChanged(function()
+miscbox:AddSlider('stretch_r', { Text = 'Amount', Default = 80, Min = 50, Max = 99, Rounding = 0, Tooltip = 'Lower = more squished (80 = default)' }):OnChanged(function()
     stretch_res = options.stretch_r.Value / 100
 end)
+miscbox:AddDivider()
 
 runservice.RenderStepped:Connect(function()
     if stretch_enabled then
@@ -930,14 +962,15 @@ local blur_amplifier = 5
 local motion_blur_fx = nil
 local last_look      = cam.CFrame.LookVector
 
-miscbox:AddToggle('mb', { Text = 'motion blur', Default = false }):OnChanged(function()
+miscbox:AddLabel("  Motion Blur")
+miscbox:AddToggle('mb', { Text = 'Enable', Default = false, Tooltip = 'Adds a blur effect based on camera movement' }):OnChanged(function()
     motionblur_enabled = toggles.mb.Value
     if not motionblur_enabled and motion_blur_fx then motion_blur_fx.Size = 0 end
 end)
-miscbox:AddSlider('mb_amt', { Text = 'blur amount', Default = 15, Min = 1, Max = 45, Rounding = 0 }):OnChanged(function()
+miscbox:AddSlider('mb_amt', { Text = 'Strength',  Default = 15, Min = 1, Max = 45, Rounding = 0, Tooltip = 'How strong the blur effect is' }):OnChanged(function()
     blur_amount = options.mb_amt.Value
 end)
-miscbox:AddSlider('mb_amp', { Text = 'blur amp',    Default = 5,  Min = 1, Max = 15, Rounding = 0 }):OnChanged(function()
+miscbox:AddSlider('mb_amp', { Text = 'Amplifier', Default = 5,  Min = 1, Max = 15, Rounding = 0, Tooltip = 'Multiplier for sensitivity to camera movement' }):OnChanged(function()
     blur_amplifier = options.mb_amp.Value
 end)
 
@@ -1019,13 +1052,15 @@ runservice.RenderStepped:Connect(function(dt)
     end
 end)
 
-fpsbox:AddToggle('fps_on', { Text = 'fps counter', Default = true }):OnChanged(function()
+fpsbox:AddLabel("  FPS Counter")
+fpsbox:AddToggle('fps_on', { Text = 'Enable', Default = true, Tooltip = 'Shows FPS colored green/yellow/red by performance' }):OnChanged(function()
     fps_enabled = toggles.fps_on.Value
 end)
 fpsbox:AddDropdown('fps_pos', {
-    Text    = 'position',
+    Text    = 'Position',
     Values  = {"Top Left", "Top Right", "Bottom Left", "Bottom Right"},
     Default = "Top Left",
+    Tooltip = 'Which corner of the screen to draw the FPS counter in',
 }):OnChanged(function()
     fps_position = options.fps_pos.Value
 end)
@@ -1128,16 +1163,18 @@ runservice.RenderStepped:Connect(function()
     wm_sub_label.Text = tostring(fps_val) .. " fps   " .. tostring(ping) .. " ms"
 end)
 
-uibox:AddToggle('wm_on', { Text = 'watermark', Default = true }):OnChanged(function()
+uibox:AddLabel("  HUD")
+uibox:AddToggle('wm_on', { Text = 'Watermark', Default = true, Tooltip = 'Shows the Xeioa watermark in the top-right corner' }):OnChanged(function()
     wm_enabled        = toggles.wm_on.Value
     wm_gui.Enabled    = wm_enabled
 end)
-
--- ESP Farbe
+uibox:AddDivider()
+uibox:AddLabel("  ESP Accent")
 uibox:AddDropdown('esp_col', {
-    Text    = 'esp color',
+    Text    = 'Color',
     Values  = {"Cyan", "Green", "Purple", "Orange", "White", "Red"},
     Default = "Cyan",
+    Tooltip = 'Accent color for ESP boxes, tracers and glow',
 }):OnChanged(function()
     local map = {
         Cyan   = Color3.fromRGB(0,200,255),
@@ -1201,18 +1238,21 @@ runservice.RenderStepped:Connect(function()
     end
 end)
 
-chbox:AddToggle('ch_on',  { Text = 'crosshair',  Default = false }):OnChanged(function() ch_enabled = toggles.ch_on.Value  end)
-chbox:AddToggle('ch_dot', { Text = 'center dot', Default = false }):OnChanged(function() ch_dot     = toggles.ch_dot.Value end)
-chbox:AddSlider('ch_sz',  { Text = 'size',       Default = 8,  Min = 2,  Max = 20, Rounding = 0 }):OnChanged(function() ch_size  = options.ch_sz.Value end)
-chbox:AddSlider('ch_gp',  { Text = 'gap',        Default = 4,  Min = 0,  Max = 12, Rounding = 0 }):OnChanged(function() ch_gap   = options.ch_gp.Value end)
-chbox:AddSlider('ch_th',  { Text = 'thickness',  Default = 2,  Min = 1,  Max = 5,  Rounding = 0 }):OnChanged(function()
+chbox:AddLabel("  Crosshair")
+chbox:AddToggle('ch_on',  { Text = 'Enable',     Default = false, Tooltip = 'Draws a custom crosshair at the center of screen' }):OnChanged(function() ch_enabled = toggles.ch_on.Value  end)
+chbox:AddToggle('ch_dot', { Text = 'Center Dot', Default = false, Tooltip = 'Adds a filled dot in the center of the crosshair' }):OnChanged(function() ch_dot     = toggles.ch_dot.Value end)
+chbox:AddDivider()
+chbox:AddSlider('ch_sz',  { Text = 'Size',       Default = 8,  Min = 2,  Max = 20, Rounding = 0, Tooltip = 'Length of each crosshair arm' }):OnChanged(function() ch_size  = options.ch_sz.Value end)
+chbox:AddSlider('ch_gp',  { Text = 'Gap',        Default = 4,  Min = 0,  Max = 12, Rounding = 0, Tooltip = 'Empty space between center and arms' }):OnChanged(function() ch_gap   = options.ch_gp.Value end)
+chbox:AddSlider('ch_th',  { Text = 'Thickness',  Default = 2,  Min = 1,  Max = 5,  Rounding = 0, Tooltip = 'Line thickness of the crosshair arms' }):OnChanged(function()
     ch_thick = options.ch_th.Value
     for i = 1, 4 do CH_LINES[i].Thickness = ch_thick end
 end)
 chbox:AddDropdown('ch_col', {
-    Text    = 'color',
+    Text    = 'Color',
     Values  = {"Cyan", "White", "Green", "Red", "Yellow", "Purple"},
     Default = "Cyan",
+    Tooltip = 'Color of the crosshair lines',
 }):OnChanged(function()
     local map = {
         Cyan   = Color3.fromRGB(0,200,255),
