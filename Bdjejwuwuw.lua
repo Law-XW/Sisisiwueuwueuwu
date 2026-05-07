@@ -1,34 +1,36 @@
 local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
-local library      = loadstring(game:HttpGet(repo .. "Library.lua"))()
+local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
-local SaveManager  = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
-local window = library:CreateWindow({
-    Title = "Xeioa",
-    Footer = "Xeioa",
-    Icon = 95816097006870,
-    NotifySide = "Right",
-    ShowCustomCursor = true,
+local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
+
+local Options = Library.Options
+local Toggles = Library.Toggles
+
+Library.ShowToggleFrameInKeybinds = true
+
+local Window = Library:CreateWindow({
+	Title = "BloxStrike",
+	Footer = "Xeioa",
+	NotifySide = "Right",
+	ShowCustomCursor = true,
+	AutoShow = true,
 })
 
-local toggles = library.Toggles
-local options  = library.Options
-
-local tabs = {
-    combat     = window:AddTab("Combat",      "crosshair"),
-    visuals    = window:AddTab("Visuals",     "eye"),
-    skins      = window:AddTab("Skins",       "swords"),
-    settings   = window:AddTab("Settings",    "settings"),
-    uisettings = window:AddTab("UI Settings", "palette"),
+local Tabs = {
+	Combat = Window:AddTab("Combat", "sword"),
+	Visual = Window:AddTab("Visual", "eye"),
+	Skins = Window:AddTab("Skins", "shirt"),
+	["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
 
--- Groupboxen
-local combatbox = tabs.combat:AddLeftGroupbox("combat",   "crosshair")
-local espbox    = tabs.visuals:AddLeftGroupbox("esp",     "eye")
-local miscbox   = tabs.visuals:AddRightGroupbox("misc",   "sparkles")
-local skinbox   = tabs.skins:AddLeftGroupbox("skins",     "swords")
-local uibox     = tabs.settings:AddLeftGroupbox("ui",     "settings")
-local chbox     = tabs.settings:AddRightGroupbox("crosshair", "crosshair")
-local fpsbox    = tabs.settings:AddLeftGroupbox("fps",    "activity")
+local AimbotBox  = Tabs.Combat:AddLeftGroupbox("Aimbot", "crosshair")
+local MiscBox    = Tabs.Combat:AddRightGroupbox("Misc", "zap")
+
+local ESPBox     = Tabs.Visual:AddLeftGroupbox("ESP", "scan-eye")
+local EffectsBox = Tabs.Visual:AddRightGroupbox("Effects", "sparkles")
+
+local WeaponBox  = Tabs.Skins:AddLeftGroupbox("Weapon Skins", "layers")
+local KnifeBox   = Tabs.Skins:AddRightGroupbox("Knife & Gloves", "package")
 
 local replicatedstorage = game:GetService("ReplicatedStorage")
 local runservice        = game:GetService("RunService")
@@ -37,24 +39,25 @@ local cas               = game:GetService("ContextActionService")
 local players           = game:GetService("Players")
 local workspace_svc     = game:GetService("Workspace")
 local inputservice      = game:GetService("UserInputService")
-local plr  = players.LocalPlayer
-local cam  = workspace_svc.CurrentCamera
-local charfolder = workspace_svc:WaitForChild("Characters", 10)
+local plr               = players.LocalPlayer
+local cam               = workspace_svc.CurrentCamera
+local charfolder        = workspace_svc:WaitForChild("Characters", 10)
 
-local function get_t()  return charfolder:FindFirstChild("Terrorists") end
-local function get_ct() return charfolder:FindFirstChild("Counter-Terrorists") end
+local function get_t()   return charfolder:FindFirstChild("Terrorists") end
+local function get_ct()  return charfolder:FindFirstChild("Counter-Terrorists") end
 local function is_alive()
-    local t, ct = get_t(), get_ct()
-    return (t and t:FindFirstChild(plr.Name)) or (ct and ct:FindFirstChild(plr.Name))
+	local t, ct = get_t(), get_ct()
+	return (t and t:FindFirstChild(plr.Name)) or (ct and ct:FindFirstChild(plr.Name))
 end
 local function get_enemy()
-    if not is_alive() then return end
-    local t, ct = get_t(), get_ct()
-    if t and t:FindFirstChild(plr.Name) then return ct end
-    if ct and ct:FindFirstChild(plr.Name) then return t end
+	if not is_alive() then return end
+	local t, ct = get_t(), get_ct()
+	if t and t:FindFirstChild(plr.Name) then return ct end
+	if ct and ct:FindFirstChild(plr.Name) then return t end
 end
 
--- ─── AIMBOT ──────────────────────────────────────────────────────────────────
+-- ─── AIMBOT ────────────────────────────────────────────────────────────────
+
 local aim_enabled = false
 local fov_enabled = false
 local fov_radius  = 100
@@ -70,1187 +73,909 @@ fov_circle.Visible   = false
 fov_circle.Color     = Color3.new(1, 1, 1)
 
 local function get_screen_center()
-    return Vector2.new(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2)
+	return Vector2.new(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2)
 end
 
 local function get_target()
-    local res, dist = nil, fov_radius
-    local e = get_enemy()
-    if not e or not aim_enabled then return end
-    local aim_pos = is_mobile and get_screen_center() or inputservice:GetMouseLocation()
-    for _, v in ipairs(e:GetChildren()) do
-        local h, hd = v:FindFirstChildOfClass("Humanoid"), v:FindFirstChild("Head")
-        if h and h.Health > 0 and hd then
-            local p, vis = cam:WorldToViewportPoint(hd.Position)
-            if vis then
-                local d = (Vector2.new(p.X, p.Y) - aim_pos).Magnitude
-                if d < dist then dist = d; res = hd end
-            end
-        end
-    end
-    return res
+	local res, dist = nil, fov_radius
+	local e = get_enemy()
+	if not e or not aim_enabled then return end
+	local aim_pos = is_mobile and get_screen_center() or inputservice:GetMouseLocation()
+	for _, v in ipairs(e:GetChildren()) do
+		local h, hd = v:FindFirstChildOfClass("Humanoid"), v:FindFirstChild("Head")
+		if h and h.Health > 0 and hd then
+			local p, vis = cam:WorldToViewportPoint(hd.Position)
+			if vis then
+				local d = (Vector2.new(p.X, p.Y) - aim_pos).Magnitude
+				if d < dist then dist = d; res = hd end
+			end
+		end
+	end
+	return res
 end
 
 if not is_mobile then
-    inputservice.InputBegan:Connect(function(i) if i.UserInputType == aim_key then is_aiming = true  end end)
-    inputservice.InputEnded:Connect(function(i)  if i.UserInputType == aim_key then is_aiming = false end end)
+	inputservice.InputBegan:Connect(function(i) if i.UserInputType == aim_key then is_aiming = true  end end)
+	inputservice.InputEnded:Connect(function(i) if i.UserInputType == aim_key then is_aiming = false end end)
 else
-    local aim_touch_id = nil
-    inputservice.TouchStarted:Connect(function(touch, gp)
-        if gp then return end
-        if aim_touch_id == nil then aim_touch_id = touch.Position; is_aiming = true end
-    end)
-    inputservice.TouchEnded:Connect(function(touch, gp)
-        if gp then return end
-        is_aiming = false; aim_touch_id = nil
-    end)
+	local aim_touch_id = nil
+	inputservice.TouchStarted:Connect(function(touch, gp)
+		if gp then return end
+		if aim_touch_id == nil then aim_touch_id = touch.Position; is_aiming = true end
+	end)
+	inputservice.TouchEnded:Connect(function(touch, gp)
+		if gp then return end
+		is_aiming = false; aim_touch_id = nil
+	end)
 end
 
 runservice.RenderStepped:Connect(function()
-    local center = get_screen_center()
-    if fov_enabled then
-        fov_circle.Position = center
-        fov_circle.Radius   = fov_radius
-        fov_circle.Visible  = true
-    else
-        fov_circle.Visible = false
-    end
-    if not is_aiming or not is_alive() or not aim_enabled then return end
-    local target = get_target()
-    if target then
-        local p_pos = cam:WorldToViewportPoint(target.Position)
-        if is_mobile then
-            local vp  = cam.ViewportSize
-            local new_x = math.clamp(p_pos.X, 0, vp.X)
-            local new_y = math.clamp(p_pos.Y, 0, vp.Y)
-            local ray   = cam:ViewportPointToRay(new_x, new_y)
-            cam.CFrame  = CFrame.lookAt(cam.CFrame.Position, cam.CFrame.Position + ray.Direction)
-        else
-            local m_pos = inputservice:GetMouseLocation()
-            if mousemoverel then
-                mousemoverel((p_pos.X - m_pos.X) / smoothing, (p_pos.Y - m_pos.Y) / smoothing)
-            end
-        end
-    end
+	local center = get_screen_center()
+	if fov_enabled then
+		fov_circle.Position = center
+		fov_circle.Radius   = fov_radius
+		fov_circle.Visible  = true
+	else
+		fov_circle.Visible = false
+	end
+	if not is_aiming or not is_alive() or not aim_enabled then return end
+	local target = get_target()
+	if target then
+		local p_pos = cam:WorldToViewportPoint(target.Position)
+		if is_mobile then
+			local vp    = cam.ViewportSize
+			local new_x = math.clamp(p_pos.X, 0, vp.X)
+			local new_y = math.clamp(p_pos.Y, 0, vp.Y)
+			local ray   = cam:ViewportPointToRay(new_x, new_y)
+			cam.CFrame  = CFrame.lookAt(cam.CFrame.Position, cam.CFrame.Position + ray.Direction)
+		else
+			local m_pos = inputservice:GetMouseLocation()
+			if mousemoverel then
+				mousemoverel((p_pos.X - m_pos.X) / smoothing, (p_pos.Y - m_pos.Y) / smoothing)
+			end
+		end
+	end
 end)
 
-combatbox:AddLabel("  Aimbot")
-combatbox:AddToggle('aim',   { Text = 'Enable',     Default = false, Tooltip = 'Locks onto the nearest enemy head inside FOV' }):OnChanged(function() aim_enabled = toggles.aim.Value   end)
-combatbox:AddToggle('fov',   { Text = 'FOV Circle', Default = false, Tooltip = 'Draws the aimbot range as a circle on screen' }):OnChanged(function() fov_enabled = toggles.fov.Value   end)
-combatbox:AddSlider('fov_r', { Text = 'FOV Radius', Default = 100, Min = 10, Max = 500, Rounding = 0, Tooltip = 'Max pixel distance from cursor to snap-on' }):OnChanged(function() fov_radius = options.fov_r.Value end)
-combatbox:AddSlider('smth',  { Text = 'Smoothing',  Default = 3,   Min = 1,  Max = 10,  Rounding = 0, Tooltip = 'Higher = slower, smoother aim movement' }):OnChanged(function() smoothing  = options.smth.Value  end)
-combatbox:AddDivider()
+AimbotBox:AddToggle("aim",   { Text = "Aimbot",     Default = false }):OnChanged(function() aim_enabled = Toggles.aim.Value  end)
+AimbotBox:AddToggle("fov",   { Text = "FOV Circle", Default = false }):OnChanged(function() fov_enabled = Toggles.fov.Value  end)
+AimbotBox:AddSlider("fov_r", { Text = "FOV Radius", Default = 100, Min = 10,  Max = 500, Rounding = 0 }):OnChanged(function() fov_radius = Options.fov_r.Value end)
+AimbotBox:AddSlider("smth",  { Text = "Smoothing",  Default = 3,   Min = 1,   Max = 10,  Rounding = 0 }):OnChanged(function() smoothing  = Options.smth.Value  end)
+AimbotBox:AddDivider()
 
--- ─── TRIGGERBOT ──────────────────────────────────────────────────────────────
 local trigger_enabled, trigger_delay = false, 0
-combatbox:AddLabel("  Triggerbot")
-combatbox:AddToggle('trig',  { Text = 'Enable',    Default = false, Tooltip = 'Auto-fires when crosshair is on an enemy' }):OnChanged(function() trigger_enabled = toggles.trig.Value  end)
-combatbox:AddSlider('trig_d',{ Text = 'Delay (ms)',Default = 0, Min = 0, Max = 500, Rounding = 0, Tooltip = 'Wait time before shooting (milliseconds)' }):OnChanged(function() trigger_delay = options.trig_d.Value end)
-combatbox:AddDivider()
+AimbotBox:AddToggle("trig",  { Text = "Triggerbot",    Default = false }):OnChanged(function() trigger_enabled = Toggles.trig.Value end)
+AimbotBox:AddSlider("trig_d",{ Text = "Trigger Delay", Default = 0, Min = 0, Max = 500, Rounding = 0, Suffix = "ms" }):OnChanged(function() trigger_delay = Options.trig_d.Value end)
 
 task.spawn(function()
-    while task.wait(0.01) do
-        if trigger_enabled and is_alive() then
-            local r = cam:ViewportPointToRay(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)
-            local params = RaycastParams.new()
-            params.FilterType = Enum.RaycastFilterType.Exclude
-            local ign = {cam}
-            if plr.Character then table.insert(ign, plr.Character) end
-            params.FilterDescendantsInstances = ign
-            local res = workspace_svc:Raycast(r.Origin, r.Direction * 1000, params)
-            if res and res.Instance then
-                local m = res.Instance:FindFirstAncestorOfClass("Model")
-                if m and m:FindFirstChildOfClass("Humanoid") then
-                    local e = get_enemy()
-                    if e and m.Parent == e and m:FindFirstChildOfClass("Humanoid").Health > 0 then
-                        if trigger_delay > 0 then task.wait(trigger_delay / 1000) end
-                        if mouse1click then mouse1click() end
-                        task.wait(0.05)
-                    end
-                end
-            end
-        end
-    end
+	while task.wait(0.01) do
+		if trigger_enabled and is_alive() then
+			local r      = cam:ViewportPointToRay(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2)
+			local params = RaycastParams.new()
+			params.FilterType = Enum.RaycastFilterType.Exclude
+			local ign = {cam}
+			if plr.Character then table.insert(ign, plr.Character) end
+			params.FilterDescendantsInstances = ign
+			local res = workspace_svc:Raycast(r.Origin, r.Direction * 1000, params)
+			if res and res.Instance then
+				local m = res.Instance:FindFirstAncestorOfClass("Model")
+				if m and m:FindFirstChildOfClass("Humanoid") then
+					local e = get_enemy()
+					if e and m.Parent == e and m:FindFirstChildOfClass("Humanoid").Health > 0 then
+						if trigger_delay > 0 then task.wait(trigger_delay / 1000) end
+						if mouse1click then mouse1click() end
+						task.wait(0.05)
+					end
+				end
+			end
+		end
+	end
 end)
 
--- ─── HITBOX ──────────────────────────────────────────────────────────────────
+-- ─── MISC COMBAT ───────────────────────────────────────────────────────────
+
 local hitbox_enabled, hitbox_size, hb_originals = false, 3, {}
-combatbox:AddLabel("  Misc Combat")
-combatbox:AddToggle('hb',  { Text = 'Hitbox',      Default = false, Tooltip = 'Enlarges enemy head hitbox' }):OnChanged(function() hitbox_enabled = toggles.hb.Value  end)
-combatbox:AddSlider('hb_s',{ Text = 'Hitbox Size', Default = 3, Min = 1, Max = 3, Rounding = 1, Tooltip = 'Scale multiplier for enemy head hitbox' }):OnChanged(function() hitbox_size = options.hb_s.Value end)
+MiscBox:AddToggle("hb",   { Text = "Hitbox Expander", Default = false }):OnChanged(function() hitbox_enabled = Toggles.hb.Value  end)
+MiscBox:AddSlider("hb_s", { Text = "Hitbox Size",     Default = 3, Min = 1, Max = 3, Rounding = 1 }):OnChanged(function() hitbox_size = Options.hb_s.Value end)
 
 task.spawn(function()
-    while task.wait(0.5) do
-        local e = get_enemy()
-        if e then
-            for _, v in ipairs(e:GetChildren()) do
-                local hd, h = v:FindFirstChild("Head"), v:FindFirstChildOfClass("Humanoid")
-                if hd and h and h.Health > 0 then
-                    if not hb_originals[hd] then hb_originals[hd] = hd.Size end
-                    if hitbox_enabled then
-                        hd.Size = Vector3.new(hitbox_size, hitbox_size, hitbox_size)
-                        hd.CanCollide = false
-                        hd.Transparency = 0.5
-                    else
-                        if hb_originals[hd] then hd.Size = hb_originals[hd]; hd.Transparency = 0 end
-                    end
-                end
-            end
-        end
-    end
+	while task.wait(0.5) do
+		local e = get_enemy()
+		if e then
+			for _, v in ipairs(e:GetChildren()) do
+				local hd, h = v:FindFirstChild("Head"), v:FindFirstChildOfClass("Humanoid")
+				if hd and h and h.Health > 0 then
+					if not hb_originals[hd] then hb_originals[hd] = hd.Size end
+					if hitbox_enabled then
+						hd.Size        = Vector3.new(hitbox_size, hitbox_size, hitbox_size)
+						hd.CanCollide  = false
+						hd.Transparency = 0.5
+					else
+						if hb_originals[hd] then hd.Size = hb_originals[hd]; hd.Transparency = 0 end
+					end
+				end
+			end
+		end
+	end
 end)
 
--- ─── BHOP ────────────────────────────────────────────────────────────────────
 local bhop_enabled = false
-combatbox:AddToggle('bhop', { Text = 'BHop',      Default = false, Tooltip = 'Auto-jumps while holding Space to bunny hop' }):OnChanged(function() bhop_enabled = toggles.bhop.Value end)
+MiscBox:AddToggle("bhop", { Text = "Bunny Hop", Default = false }):OnChanged(function() bhop_enabled = Toggles.bhop.Value end)
 runservice.RenderStepped:Connect(function()
-    if bhop_enabled and inputservice:IsKeyDown(Enum.KeyCode.Space) and is_alive() and plr.Character then
-        local h = plr.Character:FindFirstChildOfClass("Humanoid")
-        if h and h:GetState() ~= Enum.HumanoidStateType.Jumping and h:GetState() ~= Enum.HumanoidStateType.Freefall then
-            h.Jump = true
-        end
-    end
+	if bhop_enabled and inputservice:IsKeyDown(Enum.KeyCode.Space) and is_alive() and plr.Character then
+		local h = plr.Character:FindFirstChildOfClass("Humanoid")
+		if h and h:GetState() ~= Enum.HumanoidStateType.Jumping and h:GetState() ~= Enum.HumanoidStateType.Freefall then
+			h.Jump = true
+		end
+	end
 end)
 
--- ─── NO RECOIL ───────────────────────────────────────────────────────────────
 local norecoil_enabled = false
-combatbox:AddToggle('nr', { Text = 'No Recoil', Default = false, Tooltip = 'Removes weapon recoil on every shot' }):OnChanged(function() norecoil_enabled = toggles.nr.Value end)
-combatbox:AddDivider()
-
+MiscBox:AddToggle("nr", { Text = "No Recoil", Default = false }):OnChanged(function() norecoil_enabled = Toggles.nr.Value end)
 task.spawn(function()
-    while task.wait(0.5) do
-        if norecoil_enabled then
-            pcall(function()
-                local char = plr.Character
-                if char then
-                    for _, tool in pairs(char:GetChildren()) do
-                        if tool:IsA("Tool") then
-                            local recoil = tool:FindFirstChild("Recoil") or tool:FindFirstChild("RecoilControl")
-                            if recoil and recoil:IsA("NumberValue") then recoil.Value = 0 end
-                        end
-                    end
-                end
-            end)
-        end
-    end
+	while task.wait(0.5) do
+		if norecoil_enabled then
+			pcall(function()
+				local char = plr.Character
+				if char then
+					for _, tool in pairs(char:GetChildren()) do
+						if tool:IsA("Tool") then
+							local recoil = tool:FindFirstChild("Recoil") or tool:FindFirstChild("RecoilControl")
+							if recoil and recoil:IsA("NumberValue") then recoil.Value = 0 end
+						end
+					end
+				end
+			end)
+		end
+	end
 end)
 
--- ─── WALLBANG ────────────────────────────────────────────────────────────────
+MiscBox:AddDivider()
+
 local wallbang_enabled = false
 local wallbang_keywords = {
-    "cube","wall","box","crate","fence","container","concrete",
-    "cube.001","ship","invisible","plane.002","plane.003",
-    "ceiling.006","acprop","cylinder.008","doorarchway.001",
-    "door3_low","cylinder.006"
+	"cube","wall","box","crate","fence","container","concrete",
+	"cube.001","ship","invisible","plane.002","plane.003",
+	"ceiling.006","acprop","cylinder.008","doorarchway.001","door3_low","cylinder.006"
 }
+MiscBox:AddToggle("wb", { Text = "Wallbang", Default = false }):OnChanged(function()
+	wallbang_enabled = Toggles.wb.Value
+	for _, v in ipairs(workspace_svc:GetDescendants()) do
+		if v:IsA("BasePart") then
+			local name = string.lower(v.Name)
+			for _, kw in ipairs(wallbang_keywords) do
+				if string.find(name, kw, 1, true) then
+					v.CanCollide  = not wallbang_enabled
+					if wallbang_enabled then v.CastShadow = false end
+					break
+				end
+			end
+		end
+	end
+end)
+MiscBox:AddButton({
+	Text = "Destroy Walls",
+	Func = function()
+		for _, v in ipairs(workspace_svc:GetDescendants()) do
+			local name = string.lower(v.Name)
+			for _, kw in ipairs(wallbang_keywords) do
+				if string.find(name, kw, 1, true) then v:Destroy(); break end
+			end
+		end
+	end,
+	DoubleClick = true,
+	Tooltip = "Double-click to destroy all wall parts",
+})
 
-combatbox:AddLabel("  Wallbang")
-combatbox:AddToggle('wb', { Text = 'Enable', Default = false, Tooltip = 'Makes common map objects shoot-through' }):OnChanged(function()
-    wallbang_enabled = toggles.wb.Value
-    for _, v in ipairs(workspace_svc:GetDescendants()) do
-        if v:IsA("BasePart") then
-            local name = string.lower(v.Name)
-            for _, kw in ipairs(wallbang_keywords) do
-                if string.find(name, kw, 1, true) then
-                    v.CanCollide = not wallbang_enabled
-                    if wallbang_enabled then v.CastShadow = false end
-                    break
-                end
-            end
-        end
-    end
+-- ─── ESP (completely redesigned) ───────────────────────────────────────────
+
+local esp_enabled   = false
+local show_box      = true
+local show_name     = true
+local show_hp       = true
+local show_dist     = true
+local show_tracer   = false
+local esp_color     = Color3.fromRGB(255, 60, 60)
+local esp_cache     = {}
+
+local function make_line(thick, color, transp)
+	local l = Drawing.new("Line")
+	l.Thickness   = thick or 1
+	l.Color       = color or Color3.new(1, 1, 1)
+	l.Transparency = transp or 1
+	l.Visible     = false
+	return l
+end
+
+local function make_text(size, color, center, outline)
+	local t = Drawing.new("Text")
+	t.Size    = size or 14
+	t.Color   = color or Color3.new(1, 1, 1)
+	t.Center  = center ~= nil and center or true
+	t.Outline = outline ~= nil and outline or true
+	t.Visible = false
+	return t
+end
+
+local function create_esp_set()
+	return {
+		tl_h   = make_line(2, esp_color),
+		tl_v   = make_line(2, esp_color),
+		tr_h   = make_line(2, esp_color),
+		tr_v   = make_line(2, esp_color),
+		bl_h   = make_line(2, esp_color),
+		bl_v   = make_line(2, esp_color),
+		br_h   = make_line(2, esp_color),
+		br_v   = make_line(2, esp_color),
+		tl_h_o = make_line(4, Color3.new(0,0,0)),
+		tl_v_o = make_line(4, Color3.new(0,0,0)),
+		tr_h_o = make_line(4, Color3.new(0,0,0)),
+		tr_v_o = make_line(4, Color3.new(0,0,0)),
+		bl_h_o = make_line(4, Color3.new(0,0,0)),
+		bl_v_o = make_line(4, Color3.new(0,0,0)),
+		br_h_o = make_line(4, Color3.new(0,0,0)),
+		br_v_o = make_line(4, Color3.new(0,0,0)),
+		hp_bg  = make_line(5, Color3.new(0,0,0)),
+		hp_bar = make_line(3, Color3.new(0,1,0)),
+		name   = make_text(14, Color3.new(1,1,1), true, true),
+		dist   = make_text(12, Color3.fromRGB(200,200,200), true, true),
+		tracer = make_line(1, esp_color),
+		tracer_o = make_line(3, Color3.new(0,0,0)),
+	}
+end
+
+local function set_corner(e, bx, by, bw, bh)
+	local cl = math.max(6, math.floor(bw * 0.22))
+	local ch = math.max(6, math.floor(bh * 0.18))
+	local x1, y1 = bx,        by
+	local x2, y2 = bx + bw,   by
+	local x3, y3 = bx,        by + bh
+	local x4, y4 = bx + bw,   by + bh
+
+	e.tl_h.From = Vector2.new(x1, y1);        e.tl_h.To = Vector2.new(x1 + cl, y1)
+	e.tl_v.From = Vector2.new(x1, y1);        e.tl_v.To = Vector2.new(x1, y1 + ch)
+	e.tr_h.From = Vector2.new(x2, y2);        e.tr_h.To = Vector2.new(x2 - cl, y2)
+	e.tr_v.From = Vector2.new(x2, y2);        e.tr_v.To = Vector2.new(x2, y2 + ch)
+	e.bl_h.From = Vector2.new(x3, y3);        e.bl_h.To = Vector2.new(x3 + cl, y3)
+	e.bl_v.From = Vector2.new(x3, y3);        e.bl_v.To = Vector2.new(x3, y3 - ch)
+	e.br_h.From = Vector2.new(x4, y4);        e.br_h.To = Vector2.new(x4 - cl, y4)
+	e.br_v.From = Vector2.new(x4, y4);        e.br_v.To = Vector2.new(x4, y4 - ch)
+
+	e.tl_h_o.From = e.tl_h.From; e.tl_h_o.To = e.tl_h.To
+	e.tl_v_o.From = e.tl_v.From; e.tl_v_o.To = e.tl_v.To
+	e.tr_h_o.From = e.tr_h.From; e.tr_h_o.To = e.tr_h.To
+	e.tr_v_o.From = e.tr_v.From; e.tr_v_o.To = e.tr_v.To
+	e.bl_h_o.From = e.bl_h.From; e.bl_h_o.To = e.bl_h.To
+	e.bl_v_o.From = e.bl_v.From; e.bl_v_o.To = e.bl_v.To
+	e.br_h_o.From = e.br_h.From; e.br_h_o.To = e.br_h.To
+	e.br_v_o.From = e.br_v.From; e.br_v_o.To = e.br_v.To
+end
+
+local function show_corners(e, vis)
+	local keys = {"tl_h","tl_v","tr_h","tr_v","bl_h","bl_v","br_h","br_v",
+	              "tl_h_o","tl_v_o","tr_h_o","tr_v_o","bl_h_o","bl_v_o","br_h_o","br_v_o"}
+	for _, k in ipairs(keys) do e[k].Visible = vis end
+end
+
+local function hide_esp(e)
+	for _, v in pairs(e) do v.Visible = false end
+end
+
+runservice.RenderStepped:Connect(function()
+	if not esp_enabled or not is_alive() then
+		for _, e in pairs(esp_cache) do hide_esp(e) end
+		return
+	end
+	local target_folder = get_enemy()
+	if not target_folder then return end
+	local alive_now = {}
+
+	for _, v in ipairs(target_folder:GetChildren()) do
+		local hum  = v:FindFirstChildOfClass("Humanoid")
+		local root = v:FindFirstChild("HumanoidRootPart")
+		local hd   = v:FindFirstChild("Head")
+		if hum and hum.Health > 0 and root and hd then
+			alive_now[v] = true
+			if not esp_cache[v] then esp_cache[v] = create_esp_set() end
+			local e = esp_cache[v]
+
+			local rp,  vis  = cam:WorldToViewportPoint(root.Position)
+			local top, _    = cam:WorldToViewportPoint(hd.Position + Vector3.new(0, 0.6, 0))
+			local bot, _    = cam:WorldToViewportPoint(root.Position - Vector3.new(0, 3.1, 0))
+
+			if vis then
+				local bh  = math.abs(top.Y - bot.Y)
+				local bw  = bh * 0.55
+				local bx  = rp.X - bw / 2
+				local by  = top.Y
+
+				if show_box then
+					for _, d in ipairs({"tl_h","tl_v","tr_h","tr_v","bl_h","bl_v","br_h","br_v"}) do
+						e[d].Color = esp_color
+					end
+					set_corner(e, bx, by, bw, bh)
+					show_corners(e, true)
+				else
+					show_corners(e, false)
+				end
+
+				if show_hp then
+					local hpp   = hum.Health / hum.MaxHealth
+					local hpx   = bx - 7
+					local hpc   = Color3.new(1 - hpp, hpp * 0.85, 0)
+					e.hp_bg.From  = Vector2.new(hpx, by - 1)
+					e.hp_bg.To    = Vector2.new(hpx, by + bh + 1)
+					e.hp_bg.Visible = true
+					e.hp_bar.From = Vector2.new(hpx, by + bh)
+					e.hp_bar.To   = Vector2.new(hpx, by + bh - (bh * hpp))
+					e.hp_bar.Color   = hpc
+					e.hp_bar.Visible = true
+				else
+					e.hp_bg.Visible, e.hp_bar.Visible = false, false
+				end
+
+				if show_name then
+					e.name.Text     = v.Name
+					e.name.Position = Vector2.new(rp.X, by - 18)
+					e.name.Color    = esp_color
+					e.name.Visible  = true
+				else
+					e.name.Visible = false
+				end
+
+				if show_dist then
+					local dst       = math.floor((cam.CFrame.Position - root.Position).Magnitude)
+					e.dist.Text     = dst .. "m"
+					e.dist.Position = Vector2.new(rp.X, by + bh + 3)
+					e.dist.Visible  = true
+				else
+					e.dist.Visible = false
+				end
+
+				if show_tracer then
+					local vp         = cam.ViewportSize
+					e.tracer_o.From  = Vector2.new(vp.X / 2, vp.Y)
+					e.tracer_o.To    = Vector2.new(rp.X, by + bh)
+					e.tracer_o.Visible = true
+					e.tracer.From    = Vector2.new(vp.X / 2, vp.Y)
+					e.tracer.To      = Vector2.new(rp.X, by + bh)
+					e.tracer.Color   = esp_color
+					e.tracer.Visible = true
+				else
+					e.tracer.Visible, e.tracer_o.Visible = false, false
+				end
+			else
+				hide_esp(e)
+			end
+		end
+	end
+
+	for k, v in pairs(esp_cache) do
+		if not alive_now[k] then
+			for _, d in pairs(v) do d:Remove() end
+			esp_cache[k] = nil
+		end
+	end
 end)
 
-combatbox:AddButton({ Text = 'Destroy Objects', Tooltip = 'Permanently removes all wallbang objects from the map', Func = function()
-    for _, v in ipairs(workspace_svc:GetDescendants()) do
-        local name = string.lower(v.Name)
-        for _, kw in ipairs(wallbang_keywords) do
-            if string.find(name, kw, 1, true) then v:Destroy(); break end
-        end
-    end
-end })
+ESPBox:AddToggle("esp",       { Text = "ESP",      Default = false }):OnChanged(function() esp_enabled = Toggles.esp.Value     end)
+ESPBox:AddToggle("esp_b",     { Text = "Corners",  Default = true  }):OnChanged(function() show_box    = Toggles.esp_b.Value   end)
+ESPBox:AddToggle("esp_h",     { Text = "HP Bar",   Default = true  }):OnChanged(function() show_hp     = Toggles.esp_h.Value   end)
+ESPBox:AddToggle("esp_n",     { Text = "Name",     Default = true  }):OnChanged(function() show_name   = Toggles.esp_n.Value   end)
+ESPBox:AddToggle("esp_d",     { Text = "Distance", Default = true  }):OnChanged(function() show_dist   = Toggles.esp_d.Value   end)
+ESPBox:AddToggle("esp_t",     { Text = "Tracer",   Default = false }):OnChanged(function() show_tracer = Toggles.esp_t.Value   end)
+ESPBox:AddDivider()
+ESPBox:AddLabel("ESP Color"):AddColorPicker("esp_clr", {
+	Default = Color3.fromRGB(255, 60, 60),
+	Title   = "ESP Color",
+	Callback = function(v) esp_color = v end,
+})
 
--- ─── KNIFE VM ────────────────────────────────────────────────────────────────
+-- ─── EFFECTS ───────────────────────────────────────────────────────────────
+
+local antiflash, antismoke = false, false
+EffectsBox:AddToggle("af", { Text = "No Flash", Default = false }):OnChanged(function() antiflash = Toggles.af.Value end)
+EffectsBox:AddToggle("as", { Text = "No Smoke", Default = false }):OnChanged(function() antismoke = Toggles.as.Value end)
+task.spawn(function()
+	while task.wait(0.2) do
+		if antiflash then
+			local gui    = plr.PlayerGui:FindFirstChild("FlashbangEffect")
+			local effect = game:GetService("Lighting"):FindFirstChild("FlashbangColorCorrection")
+			if gui    then gui:Destroy()    end
+			if effect then effect:Destroy() end
+		end
+	end
+end)
+task.spawn(function()
+	while task.wait(0.5) do
+		if antismoke then
+			local debris = workspace_svc:FindFirstChild("Debris")
+			if debris then
+				for _, folder in ipairs(debris:GetChildren()) do
+					if string.match(folder.Name, "Voxel") then folder:ClearAllChildren(); folder:Destroy() end
+				end
+			end
+		end
+	end
+end)
+
+EffectsBox:AddDivider()
+
+local antiaim_enabled    = false
+local antiaim_mode       = "Spin"
+local antiaim_angle      = 0
+local antiaim_spin_speed = 10
+
+EffectsBox:AddToggle("aa",     { Text = "Anti Aim",   Default = false }):OnChanged(function() antiaim_enabled    = Toggles.aa.Value     end)
+EffectsBox:AddDropdown("aa_mode", { Text = "AA Mode", Values = {"Spin","Jitter","Down","Up"}, Default = "Spin" }):OnChanged(function() antiaim_mode = Options.aa_mode.Value end)
+EffectsBox:AddSlider("aa_spd", { Text = "Spin Speed", Default = 10, Min = 1, Max = 30, Rounding = 0 }):OnChanged(function() antiaim_spin_speed = Options.aa_spd.Value end)
+
+local aa_conn = nil
+local function get_neck_joint()
+	local char = plr.Character
+	if not char then return end
+	local upper = char:FindFirstChild("UpperTorso")
+	if upper then local n = upper:FindFirstChild("Neck"); if n then return n end end
+	local head  = char:FindFirstChild("Head")
+	if head  then local n = head:FindFirstChild("Neck");  if n then return n end end
+end
+local function start_antiaim()
+	if aa_conn then aa_conn:Disconnect(); aa_conn = nil end
+	aa_conn = runservice.Heartbeat:Connect(function()
+		if not antiaim_enabled or not is_alive() or not plr.Character then return end
+		local hrp        = plr.Character:FindFirstChild("HumanoidRootPart")
+		local root_joint = hrp and hrp:FindFirstChild("RootJoint")
+		if not root_joint then
+			local lower  = plr.Character:FindFirstChild("LowerTorso")
+			root_joint   = lower and lower:FindFirstChild("Root")
+		end
+		if antiaim_mode == "Spin" then
+			if not root_joint then return end
+			antiaim_angle  = (antiaim_angle + antiaim_spin_speed) % 360
+			root_joint.C0  = CFrame.new(0, -1, 0) * CFrame.Angles(0, math.rad(antiaim_angle), 0)
+		elseif antiaim_mode == "Jitter" then
+			if not root_joint then return end
+			root_joint.C0  = CFrame.new(0, -1, 0) * CFrame.Angles(0, math.rad(180), 0)
+		elseif antiaim_mode == "Down" then
+			local neck = get_neck_joint()
+			if neck then neck.C0 = CFrame.new(0, 1, 0) * CFrame.Angles(math.rad(-89), 0, 0) end
+		elseif antiaim_mode == "Up" then
+			local neck = get_neck_joint()
+			if neck then neck.C0 = CFrame.new(0, 1, 0) * CFrame.Angles(math.rad(89), 0, 0)  end
+		end
+	end)
+end
+start_antiaim()
+
+EffectsBox:AddDivider()
+
+local thirdperson_enabled = false
+local tp_distance         = 10
+local current_fov         = 70
+
+local function set_char_visible(visible)
+	local char = plr.Character
+	if not char then return end
+	for _, part in pairs(char:GetDescendants()) do
+		if part:IsA("BasePart") or part:IsA("Decal") then
+			part.LocalTransparencyModifier = visible and 0 or 1
+		end
+	end
+end
+local function hide_viewmodel()
+	for _, obj in pairs(cam:GetChildren()) do
+		if obj:IsA("Model") then
+			for _, part in pairs(obj:GetDescendants()) do
+				if part:IsA("BasePart") or part:IsA("MeshPart") or part:IsA("SpecialMesh") then
+					part.LocalTransparencyModifier = 1
+				end
+			end
+		end
+	end
+end
+local function set_thirdperson(state)
+	local char = plr.Character
+	if not char then return end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if state then
+		if hum then hum.CameraOffset = Vector3.new(0, 2.5, tp_distance) end
+		set_char_visible(true)
+		cam.FieldOfView = 70
+	else
+		if hum then hum.CameraOffset = Vector3.new(0, 0, 0) end
+		set_char_visible(false)
+		cam.FieldOfView = current_fov
+	end
+end
+runservice.RenderStepped:Connect(function()
+	if thirdperson_enabled and plr.Character then
+		set_char_visible(true)
+		hide_viewmodel()
+	end
+end)
+
+EffectsBox:AddToggle("tp", { Text = "Third Person", Default = false }):OnChanged(function()
+	thirdperson_enabled = Toggles.tp.Value
+	set_thirdperson(thirdperson_enabled)
+end)
+EffectsBox:AddSlider("tp_dist", { Text = "TP Distance", Default = 10, Min = 3, Max = 30, Rounding = 0 }):OnChanged(function()
+	tp_distance = Options.tp_dist.Value
+	if thirdperson_enabled and plr.Character then
+		local hum = plr.Character:FindFirstChildOfClass("Humanoid")
+		if hum then hum.CameraOffset = Vector3.new(0, 0, tp_distance) end
+	end
+end)
+plr.CharacterAdded:Connect(function()
+	task.wait(0.5)
+	if thirdperson_enabled then set_thirdperson(true) end
+end)
+
+EffectsBox:AddDivider()
+
+local stretch_enabled = false
+local stretch_res     = 0.80
+EffectsBox:AddToggle("stretch", { Text = "Stretched Res", Default = false }):OnChanged(function()
+	stretch_enabled = Toggles.stretch.Value
+	if not stretch_enabled then cam.CFrame = cam.CFrame * CFrame.new(0,0,0,1,0,0,0,1,0,0,0,1) end
+end)
+EffectsBox:AddSlider("stretch_r", { Text = "Stretch Amount", Default = 80, Min = 50, Max = 99, Rounding = 0 }):OnChanged(function()
+	stretch_res = Options.stretch_r.Value / 100
+end)
+runservice.RenderStepped:Connect(function()
+	if stretch_enabled then cam.CFrame = cam.CFrame * CFrame.new(0,0,0,1,0,0,0,stretch_res,0,0,0,1) end
+end)
+
+local motionblur_enabled = false
+local blur_amount        = 15
+local blur_amplifier     = 5
+local motion_blur_fx     = nil
+local last_look          = cam.CFrame.LookVector
+
+EffectsBox:AddToggle("mb",     { Text = "Motion Blur",    Default = false }):OnChanged(function()
+	motionblur_enabled = Toggles.mb.Value
+	if not motionblur_enabled and motion_blur_fx then motion_blur_fx.Size = 0 end
+end)
+EffectsBox:AddSlider("mb_amt", { Text = "Blur Amount",    Default = 15, Min = 1, Max = 45, Rounding = 0 }):OnChanged(function() blur_amount    = Options.mb_amt.Value end)
+EffectsBox:AddSlider("mb_amp", { Text = "Blur Amplifier", Default = 5,  Min = 1, Max = 15, Rounding = 0 }):OnChanged(function() blur_amplifier = Options.mb_amp.Value end)
+
+motion_blur_fx        = Instance.new("BlurEffect")
+motion_blur_fx.Size   = 0
+motion_blur_fx.Parent = cam
+
+workspace_svc.Changed:Connect(function(prop)
+	if prop == "CurrentCamera" then
+		local nc = workspace_svc.CurrentCamera
+		if motion_blur_fx and motion_blur_fx.Parent then
+			motion_blur_fx.Parent = nc
+		else
+			motion_blur_fx        = Instance.new("BlurEffect")
+			motion_blur_fx.Size   = 0
+			motion_blur_fx.Parent = nc
+		end
+	end
+end)
+runservice.Heartbeat:Connect(function()
+	if not motion_blur_fx or not motion_blur_fx.Parent then
+		motion_blur_fx        = Instance.new("BlurEffect")
+		motion_blur_fx.Size   = 0
+		motion_blur_fx.Parent = cam
+	end
+	if motionblur_enabled then
+		local mag             = (cam.CFrame.LookVector - last_look).Magnitude
+		motion_blur_fx.Size   = math.abs(mag) * blur_amount * blur_amplifier / 2
+	else
+		motion_blur_fx.Size = 0
+	end
+	last_look = cam.CFrame.LookVector
+end)
+
+-- ─── KNIFE ─────────────────────────────────────────────────────────────────
+
 local knife_enabled, knife_selected, spawned, inspecting, swinging, last_atk = false, "Butterfly Knife", false, false, false, 0
 local knife_data = {
-    ["Karambit"]      = { Offset = CFrame.new(0, -1.5, 1.5)  },
-    ["Butterfly Knife"]={ Offset = CFrame.new(0, -1.5, 1.5)  },
-    ["M9 Bayonet"]    = { Offset = CFrame.new(0, -1.5, 1)    },
-    ["Flip Knife"]    = { Offset = CFrame.new(0, -1.5, 1.25) },
-    ["Gut Knife"]     = { Offset = CFrame.new(0, -1.5, 0.5)  },
+	["Karambit"]      = {Offset = CFrame.new(0, -1.5, 1.5)},
+	["Butterfly Knife"]= {Offset = CFrame.new(0, -1.5, 1.5)},
+	["M9 Bayonet"]    = {Offset = CFrame.new(0, -1.5, 1)},
+	["Flip Knife"]    = {Offset = CFrame.new(0, -1.5, 1.25)},
+	["Gut Knife"]     = {Offset = CFrame.new(0, -1.5, 0.5)},
 }
 local knife_vm, animator, equip_anim, idle_anim, inspect_anim, heavy_anim, s1_anim, s2_anim
 
 local function get_knife() return cam:FindFirstChild("T Knife") or cam:FindFirstChild("CT Knife") end
 local function clean_part(part)
-    if not part:IsA("BasePart") then return end
-    part.CanCollide, part.Anchored, part.CastShadow, part.CanTouch, part.CanQuery = false, false, false, false, false
+	if not part:IsA("BasePart") then return end
+	part.CanCollide, part.Anchored, part.CastShadow, part.CanTouch, part.CanQuery = false, false, false, false, false
 end
 local function play_sound(f, n)
-    local sound_folder = replicatedstorage.Sounds:FindFirstChild(knife_selected)
-    if not sound_folder then return end
-    local sound = sound_folder:WaitForChild(f):WaitForChild(n):Clone()
-    sound.Parent = cam; sound:Play()
-    sound.Ended:Once(function() sound:Destroy() end)
-    return sound
+	local sf = replicatedstorage.Sounds:FindFirstChild(knife_selected)
+	if not sf then return end
+	local sound        = sf:WaitForChild(f):WaitForChild(n):Clone()
+	sound.Parent       = cam
+	sound:Play()
+	sound.Ended:Once(function() sound:Destroy() end)
+	return sound
 end
 local function attach_asset(f, arm, model, n, o)
-    local target_arm = knife_vm:FindFirstChild(arm)
-    if not target_arm then return end
-    local asset = f:WaitForChild(model):Clone()
-    clean_part(asset)
-    asset.Name, asset.Parent = n, target_arm
-    local motor = Instance.new("Motor6D")
-    motor.Part0, motor.Part1, motor.C0, motor.Parent = target_arm, asset, o, target_arm
+	local target_arm = knife_vm:FindFirstChild(arm)
+	if not target_arm then return end
+	local asset       = f:WaitForChild(model):Clone()
+	clean_part(asset)
+	asset.Name, asset.Parent = n, target_arm
+	local motor       = Instance.new("Motor6D")
+	motor.Part0, motor.Part1, motor.C0, motor.Parent = target_arm, asset, o, target_arm
 end
-local function handle_action(name, state, _object)
-    if state ~= Enum.UserInputState.Begin or not spawned or not animator or not is_alive() then return Enum.ContextActionResult.Pass end
-    if name == "ins" then
-        if (equip_anim and equip_anim.IsPlaying) or inspecting or swinging then return Enum.ContextActionResult.Pass end
-        inspecting = true
-        if idle_anim then idle_anim:Stop() end
-        inspect_anim:Play()
-        inspect_anim.Stopped:Once(function() inspecting = false end)
-    elseif name == "atk" then
-        local now = os.clock()
-        if (equip_anim and equip_anim.IsPlaying) or (now - last_atk < 1) then return Enum.ContextActionResult.Pass end
-        last_atk = now
-        if inspecting then inspecting = false; if inspect_anim then inspect_anim:Stop() end end
-        swinging = true
-        if idle_anim then idle_anim:Stop() end
-        local anims  = { heavy_anim, s1_anim, s2_anim }
-        local chosen = anims[math.random(1, #anims)]
-        local folder = (chosen == heavy_anim and "HitOne") or (chosen == s1_anim and "HitTwo") or "HitThree"
-        chosen:Play()
-        local s = play_sound(folder, "1")
-        if s then s.Volume = 5 end
-        chosen.Stopped:Once(function() swinging = false end)
-    end
-    return Enum.ContextActionResult.Pass
+local function handle_action(name, state)
+	if state ~= Enum.UserInputState.Begin or not spawned or not animator or not is_alive() then return Enum.ContextActionResult.Pass end
+	if name == "ins" then
+		if (equip_anim and equip_anim.IsPlaying) or inspecting or swinging then return Enum.ContextActionResult.Pass end
+		inspecting = true
+		if idle_anim then idle_anim:Stop() end
+		inspect_anim:Play()
+		inspect_anim.Stopped:Once(function() inspecting = false end)
+	elseif name == "atk" then
+		local now = os.clock()
+		if (equip_anim and equip_anim.IsPlaying) or (now - last_atk < 1) then return Enum.ContextActionResult.Pass end
+		last_atk = now
+		if inspecting then inspecting = false; if inspect_anim then inspect_anim:Stop() end end
+		swinging = true
+		if idle_anim then idle_anim:Stop() end
+		local anims  = {heavy_anim, s1_anim, s2_anim}
+		local chosen = anims[math.random(1, #anims)]
+		local folder = (chosen == heavy_anim and "HitOne") or (chosen == s1_anim and "HitTwo") or "HitThree"
+		chosen:Play()
+		local s = play_sound(folder, "1")
+		if s then s.Volume = 5 end
+		chosen.Stopped:Once(function() swinging = false end)
+	end
+	return Enum.ContextActionResult.Pass
 end
 local function remove_vm()
-    spawned = false
-    cas:UnbindAction("ins"); cas:UnbindAction("atk")
-    if knife_vm then knife_vm:Destroy(); knife_vm = nil end
-    animator, inspecting, swinging = nil, false, false
+	spawned = false
+	cas:UnbindAction("ins"); cas:UnbindAction("atk")
+	if knife_vm then knife_vm:Destroy(); knife_vm = nil end
+	animator, inspecting, swinging = nil, false, false
 end
 local function spawn_vm(k)
-    if spawned or not knife_enabled or not is_alive() then return end
-    spawned = true
-    local knife_template = replicatedstorage.Assets.Weapons:WaitForChild(knife_selected)
-    local knife_offset   = knife_data[knife_selected].Offset
-    knife_vm = knife_template:WaitForChild("Camera"):Clone()
-    knife_vm.Name, knife_vm.Parent = knife_selected, cam
-    for _, part in knife_vm:GetDescendants() do clean_part(part) end
-    for _, part in k:GetDescendants() do if part:IsA("BasePart") or part:IsA("Texture") then part.Transparency = 1 end end
-    if plr.Character.Parent.Name == "Terrorists" then
-        local gloves = replicatedstorage.Assets.Weapons:WaitForChild("T Glove")
-        attach_asset(gloves, "Left Arm",  "Left Arm",  "Glove", CFrame.new(0, 0, -1.5))
-        attach_asset(gloves, "Right Arm", "Right Arm", "Glove", CFrame.new(0, 0, -1.5))
-    else
-        local sleeves = replicatedstorage.Assets.Sleeves:WaitForChild("IDF")
-        local gloves  = replicatedstorage.Assets.Weapons:WaitForChild("CT Glove")
-        attach_asset(sleeves, "Left Arm",  "Left Arm",  "Sleeve", CFrame.new(0, 0, 0.5))
-        attach_asset(gloves,  "Left Arm",  "Left Arm",  "Glove",  CFrame.new(0, 0, -1.5))
-        attach_asset(sleeves, "Right Arm", "Right Arm", "Sleeve", CFrame.new(0, 0, 0.5))
-        attach_asset(gloves,  "Right Arm", "Right Arm", "Glove",  CFrame.new(0, 0, -1.5))
-    end
-    local controller = knife_vm:FindFirstChildOfClass("AnimationController") or knife_vm:FindFirstChildOfClass("Animator")
-    animator = controller:FindFirstChildWhichIsA("Animator") or controller
-    local anim_folder = replicatedstorage.Assets.WeaponAnimations:WaitForChild(knife_selected):WaitForChild("CameraAnimations")
-    equip_anim   = animator:LoadAnimation(anim_folder:WaitForChild("Equip"))
-    idle_anim    = animator:LoadAnimation(anim_folder:WaitForChild("Idle"))
-    inspect_anim = animator:LoadAnimation(anim_folder:WaitForChild("Inspect"))
-    heavy_anim   = animator:LoadAnimation(anim_folder:WaitForChild("Heavy Swing"))
-    s1_anim      = animator:LoadAnimation(anim_folder:WaitForChild("Swing1"))
-    s2_anim      = animator:LoadAnimation(anim_folder:WaitForChild("Swing2"))
-    knife_vm:SetPrimaryPartCFrame(cam.CFrame * CFrame.new(0, -1.5, 5))
-    tweenservice:Create(knife_vm.PrimaryPart, TweenInfo.new(0.2), { CFrame = cam.CFrame * knife_offset }):Play()
-    equip_anim:Play()
-    play_sound("Equip", "1")
-    cas:BindAction("ins", handle_action, false, Enum.KeyCode.F)
-    cas:BindAction("atk", handle_action, false, Enum.UserInputType.MouseButton1)
+	if spawned or not knife_enabled or not is_alive() then return end
+	spawned = true
+	local knife_template = replicatedstorage.Assets.Weapons:WaitForChild(knife_selected)
+	local knife_offset   = knife_data[knife_selected].Offset
+	knife_vm             = knife_template:WaitForChild("Camera"):Clone()
+	knife_vm.Name, knife_vm.Parent = knife_selected, cam
+	for _, part in knife_vm:GetDescendants() do clean_part(part) end
+	for _, part in k:GetDescendants() do
+		if part:IsA("BasePart") or part:IsA("Texture") then part.Transparency = 1 end
+	end
+	if plr.Character.Parent.Name == "Terrorists" then
+		local gloves = replicatedstorage.Assets.Weapons:WaitForChild("T Glove")
+		attach_asset(gloves, "Left Arm",  "Left Arm",  "Glove", CFrame.new(0, 0, -1.5))
+		attach_asset(gloves, "Right Arm", "Right Arm", "Glove", CFrame.new(0, 0, -1.5))
+	else
+		local sleeves = replicatedstorage.Assets.Sleeves:WaitForChild("IDF")
+		local gloves  = replicatedstorage.Assets.Weapons:WaitForChild("CT Glove")
+		attach_asset(sleeves, "Left Arm",  "Left Arm",  "Sleeve", CFrame.new(0, 0, 0.5))
+		attach_asset(gloves,  "Left Arm",  "Left Arm",  "Glove",  CFrame.new(0, 0, -1.5))
+		attach_asset(sleeves, "Right Arm", "Right Arm", "Sleeve", CFrame.new(0, 0, 0.5))
+		attach_asset(gloves,  "Right Arm", "Right Arm", "Glove",  CFrame.new(0, 0, -1.5))
+	end
+	local controller = knife_vm:FindFirstChildOfClass("AnimationController") or knife_vm:FindFirstChildOfClass("Animator")
+	animator         = controller:FindFirstChildWhichIsA("Animator") or controller
+	local anim_folder = replicatedstorage.Assets.WeaponAnimations:WaitForChild(knife_selected):WaitForChild("CameraAnimations")
+	equip_anim   = animator:LoadAnimation(anim_folder:WaitForChild("Equip"))
+	idle_anim    = animator:LoadAnimation(anim_folder:WaitForChild("Idle"))
+	inspect_anim = animator:LoadAnimation(anim_folder:WaitForChild("Inspect"))
+	heavy_anim   = animator:LoadAnimation(anim_folder:WaitForChild("Heavy Swing"))
+	s1_anim      = animator:LoadAnimation(anim_folder:WaitForChild("Swing1"))
+	s2_anim      = animator:LoadAnimation(anim_folder:WaitForChild("Swing2"))
+	knife_vm:SetPrimaryPartCFrame(cam.CFrame * CFrame.new(0, -1.5, 5))
+	tweenservice:Create(knife_vm.PrimaryPart, TweenInfo.new(0.2), {CFrame = cam.CFrame * knife_offset}):Play()
+	equip_anim:Play()
+	play_sound("Equip", "1")
+	cas:BindAction("ins", handle_action, false, Enum.KeyCode.F)
+	cas:BindAction("atk", handle_action, false, Enum.UserInputType.MouseButton1)
 end
 
 runservice.RenderStepped:Connect(function()
-    if not knife_enabled or not knife_vm or not knife_vm.PrimaryPart then return end
-    knife_vm.PrimaryPart.CFrame = cam.CFrame * knife_data[knife_selected].Offset
-    if not (equip_anim and equip_anim.IsPlaying) and not inspecting and not swinging then
-        if idle_anim and not idle_anim.IsPlaying then idle_anim:Play() end
-    end
+	if not knife_enabled or not knife_vm or not knife_vm.PrimaryPart then return end
+	knife_vm.PrimaryPart.CFrame = cam.CFrame * knife_data[knife_selected].Offset
+	if not (equip_anim and equip_anim.IsPlaying) and not inspecting and not swinging then
+		if idle_anim and not idle_anim.IsPlaying then idle_anim:Play() end
+	end
 end)
-
 task.spawn(function()
-    while task.wait(0.1) do
-        local alive_state   = is_alive()
-        local current_knife = get_knife()
-        if knife_enabled and alive_state and current_knife and not spawned then
-            spawn_vm(current_knife)
-        elseif (not knife_enabled or not current_knife or not alive_state) and spawned then
-            remove_vm()
-        end
-    end
+	while task.wait(0.1) do
+		local alive_state   = is_alive()
+		local current_knife = get_knife()
+		if knife_enabled and alive_state and current_knife and not spawned then spawn_vm(current_knife)
+		elseif (not knife_enabled or not current_knife or not alive_state) and spawned then remove_vm() end
+	end
 end)
 
--- ─── SKINS ───────────────────────────────────────────────────────────────────
+-- ─── SKINS ─────────────────────────────────────────────────────────────────
+
 local skins_enabled, selected_skins, skin_drops, skin_options = false, {}, {}, {}
-local ct_weapon_list     = { ["USP-S"]=1,["Five-SeveN"]=1,["MP9"]=1,["FAMAS"]=1,["M4A1-S"]=1,["M4A4"]=1,["AUG"]=1 }
-local shared_weapon_list = { ["P250"]=1,["Desert Eagle"]=1,["Dual Berettas"]=1,["Negev"]=1,["P90"]=1,["Nova"]=1,["XM1014"]=1,["AWP"]=1,["SSG 08"]=1 }
-local knife_list         = { ["Karambit"]=1,["Butterfly Knife"]=1,["M9 Bayonet"]=1,["Flip Knife"]=1,["Gut Knife"]=1,["T Knife"]=1,["CT Knife"]=1 }
-local glove_list         = { ["Sports Gloves"]=1 }
-local skins_folder       = replicatedstorage:WaitForChild("Assets"):WaitForChild("Skins")
-local ignore_items       = { ["HE Grenade"]=1,["Incendiary Grenade"]=1,["Molotov"]=1,["Smoke Grenade"]=1,["Flashbang"]=1,["Decoy Grenade"]=1,["C4"]=1,["CT Glove"]=1,["T Glove"]=1 }
+local ct_weapon_list    = {["USP-S"]=1,["Five-SeveN"]=1,["MP9"]=1,["FAMAS"]=1,["M4A1-S"]=1,["M4A4"]=1,["AUG"]=1}
+local shared_weapon_list= {["P250"]=1,["Desert Eagle"]=1,["Dual Berettas"]=1,["Negev"]=1,["P90"]=1,["Nova"]=1,["XM1014"]=1,["AWP"]=1,["SSG 08"]=1}
+local knife_list        = {["Karambit"]=1,["Butterfly Knife"]=1,["M9 Bayonet"]=1,["Flip Knife"]=1,["Gut Knife"]=1,["T Knife"]=1,["CT Knife"]=1}
+local glove_list        = {["Sports Gloves"]=1}
+local skins_folder      = replicatedstorage:WaitForChild("Assets"):WaitForChild("Skins")
+local ignore_items      = {["HE Grenade"]=1,["Incendiary Grenade"]=1,["Molotov"]=1,["Smoke Grenade"]=1,["Flashbang"]=1,["Decoy Grenade"]=1,["C4"]=1,["CT Glove"]=1,["T Glove"]=1}
 
 local function apply_skin_to_model(m)
-    if not m or not skins_enabled or not is_alive() then return end
-    local skin_name = selected_skins[m.Name]
-    if not skin_name then return end
-    pcall(function()
-        local s_fd = skins_folder:FindFirstChild(m.Name)
-        if not s_fd then return end
-        local st     = s_fd:FindFirstChild(skin_name)
-        local source = st and st:FindFirstChild("Camera") and st.Camera:FindFirstChild("Factory New")
-        if not source then return end
-        for _, o in cam:GetChildren() do
-            local l, r = o:FindFirstChild("Left Arm"), o:FindFirstChild("Right Arm")
-            if l or r then
-                local gf   = skins_folder:FindFirstChild("Sports Gloves")
-                local gs   = gf and gf:FindFirstChild(selected_skins["Sports Gloves"])
-                local gsrc = gs and gs:FindFirstChild("Camera") and gs.Camera:FindFirstChild("Factory New")
-                if gsrc then
-                    for _, side in { "Left Arm", "Right Arm" } do
-                        local arm, s2 = o:FindFirstChild(side), gsrc:FindFirstChild(side)
-                        if arm and s2 then
-                            local g = arm:FindFirstChild("Glove")
-                            if g then
-                                local ex = g:FindFirstChildOfClass("SurfaceAppearance")
-                                if ex then ex:Destroy() end
-                                s2:Clone().Parent = g
-                                g:FindFirstChildOfClass("SurfaceAppearance").Name = "SurfaceAppearance"
-                            end
-                        end
-                    end
-                end
-            end
-        end
-        if not glove_list[m.Name] then
-            local weapon = m:FindFirstChild("Weapon")
-            if weapon then
-                for _, part in weapon:GetDescendants() do
-                    if part:IsA("BasePart") then
-                        local ns = source:FindFirstChild(part.Name)
-                        if ns then
-                            local ex = part:FindFirstChildOfClass("SurfaceAppearance")
-                            if ex then ex:Destroy() end
-                            ns:Clone().Parent = part
-                            part:FindFirstChildOfClass("SurfaceAppearance").Name = "SurfaceAppearance"
-                        end
-                    end
-                end
-            end
-        end
-        m:SetAttribute("SkinApplied", skin_name)
-    end)
+	if not m or not skins_enabled or not is_alive() then return end
+	local skin_name = selected_skins[m.Name]
+	if not skin_name then return end
+	pcall(function()
+		local s_fd  = skins_folder:FindFirstChild(m.Name)
+		if not s_fd then return end
+		local st    = s_fd:FindFirstChild(skin_name)
+		local source= st and st:FindFirstChild("Camera") and st.Camera:FindFirstChild("Factory New")
+		if not source then return end
+		for _, o in cam:GetChildren() do
+			local l, r = o:FindFirstChild("Left Arm"), o:FindFirstChild("Right Arm")
+			if l or r then
+				local gf   = skins_folder:FindFirstChild("Sports Gloves")
+				local gs   = gf and gf:FindFirstChild(selected_skins["Sports Gloves"])
+				local gsrc = gs and gs:FindFirstChild("Camera") and gs.Camera:FindFirstChild("Factory New")
+				if gsrc then
+					for _, side in {"Left Arm", "Right Arm"} do
+						local arm, s = o:FindFirstChild(side), gsrc:FindFirstChild(side)
+						if arm and s then
+							local g = arm:FindFirstChild("Glove")
+							if g then
+								local ex = g:FindFirstChildOfClass("SurfaceAppearance")
+								if ex then ex:Destroy() end
+								s:Clone().Parent = g
+								g:FindFirstChildOfClass("SurfaceAppearance").Name = "SurfaceAppearance"
+							end
+						end
+					end
+				end
+			end
+		end
+		if not glove_list[m.Name] then
+			local weapon = m:FindFirstChild("Weapon")
+			if weapon then
+				for _, part in weapon:GetDescendants() do
+					if part:IsA("BasePart") then
+						local ns = source:FindFirstChild(part.Name)
+						if ns then
+							local ex = part:FindFirstChildOfClass("SurfaceAppearance")
+							if ex then ex:Destroy() end
+							ns:Clone().Parent = part
+							part:FindFirstChildOfClass("SurfaceAppearance").Name = "SurfaceAppearance"
+						end
+					end
+				end
+			end
+		end
+		m:SetAttribute("SkinApplied", skin_name)
+	end)
 end
 
-skinbox:AddLabel("  Weapon Skins")
-skinbox:AddToggle('skin_on', { Text = 'Enable Skins', Default = false, Tooltip = 'Applies selected skins to your weapons in first-person' }):OnChanged(function()
-    skins_enabled = toggles.skin_on.Value
-    if not skins_enabled then for _, o in cam:GetChildren() do o:SetAttribute("SkinApplied", nil) end end
+WeaponBox:AddToggle("skin_on", { Text = "Skins", Default = false }):OnChanged(function()
+	skins_enabled = Toggles.skin_on.Value
+	if not skins_enabled then for _, o in cam:GetChildren() do o:SetAttribute("SkinApplied", nil) end end
 end)
+WeaponBox:AddButton({
+	Text = "Random Skin",
+	Func = function()
+		for w_n, o_l in pairs(skin_options) do
+			if #o_l > 0 then
+				local r_s = o_l[math.random(1, #o_l)]
+				if skin_drops[w_n] then selected_skins[w_n] = r_s; Options["Skin_"..w_n]:SetValue(r_s) end
+			end
+		end
+	end,
+	DoubleClick = false,
+})
 
-skinbox:AddButton({ Text = 'Random Skin', Tooltip = 'Picks a random skin for every weapon slot', Func = function()
-    for w_n, o_l in pairs(skin_options) do
-        if #o_l > 0 then
-            local r_s = o_l[math.random(1, #o_l)]
-            if skin_drops[w_n] then selected_skins[w_n] = r_s; options["Skin_"..w_n]:SetValue(r_s) end
-        end
-    end
-end })
-
-local function build_skin_dropdown(w_n)
-    local f = skins_folder:FindFirstChild(w_n)
-    if not f then return end
-    local o = {}
-    for _, s in f:GetChildren() do table.insert(o, s.Name) end
-    skin_options[w_n] = o
-    if not selected_skins[w_n] then selected_skins[w_n] = o[1] end
-    local d = skinbox:AddDropdown("Skin_"..w_n, { Text = w_n, Values = o, Default = o[1] })
-    d:OnChanged(function()
-        selected_skins[w_n] = d.Value
-        for _, obj in cam:GetChildren() do obj:SetAttribute("SkinApplied", nil); apply_skin_to_model(obj) end
-    end)
-    skin_drops[w_n] = d
+local function build_weapon_dropdown(w_n, box)
+	local f = skins_folder:FindFirstChild(w_n)
+	if not f then return end
+	local o = {}
+	for _, s in f:GetChildren() do table.insert(o, s.Name) end
+	skin_options[w_n] = o
+	if not selected_skins[w_n] then selected_skins[w_n] = o[1] end
+	local d = box:AddDropdown("Skin_"..w_n, { Text = w_n, Values = o, Default = o[1], Searchable = true })
+	d:OnChanged(function()
+		selected_skins[w_n] = d.Value
+		for _, obj in cam:GetChildren() do obj:SetAttribute("SkinApplied", nil); apply_skin_to_model(obj) end
+	end)
+	skin_drops[w_n] = d
 end
 
-skinbox:AddDivider()
-skinbox:AddLabel("  Knife Viewmodel")
-skinbox:AddToggle('knf_on',  { Text = 'Enable',     Default = false, Tooltip = 'Shows a knife in first-person view' }):OnChanged(function()
-    knife_enabled = toggles.knf_on.Value
-    if not knife_enabled then remove_vm() end
+KnifeBox:AddToggle("knf_on",  { Text = "Knife",      Default = false }):OnChanged(function() knife_enabled = Toggles.knf_on.Value; if not knife_enabled then remove_vm() end end)
+KnifeBox:AddDropdown("knf_sel",{ Text = "Knife Type", Values = {"Butterfly Knife","Karambit","M9 Bayonet","Flip Knife","Gut Knife"}, Default = "Butterfly Knife" }):OnChanged(function()
+	knife_selected = Options.knf_sel.Value
+	if spawned then remove_vm() end
 end)
-skinbox:AddDropdown('knf_sel', { Text = 'Knife Model', Values = {"Butterfly Knife","Karambit","M9 Bayonet","Flip Knife","Gut Knife"}, Default = "Butterfly Knife", Tooltip = 'Select which knife to display' }):OnChanged(function()
-    knife_selected = options.knf_sel.Value
-    if spawned then remove_vm() end
-end)
+KnifeBox:AddDivider()
 
-for n in pairs(knife_list)         do build_skin_dropdown(n) end
-for n in pairs(glove_list)         do build_skin_dropdown(n) end
-for n in pairs(ct_weapon_list)     do build_skin_dropdown(n) end
-for n in pairs(shared_weapon_list) do build_skin_dropdown(n) end
+for n in pairs(knife_list)         do build_weapon_dropdown(n, KnifeBox)  end
+for n in pairs(glove_list)         do build_weapon_dropdown(n, KnifeBox)  end
+for n in pairs(ct_weapon_list)     do build_weapon_dropdown(n, WeaponBox) end
+for n in pairs(shared_weapon_list) do build_weapon_dropdown(n, WeaponBox) end
 for _, f in skins_folder:GetChildren() do
-    if not ignore_items[f.Name] and not knife_list[f.Name] and not glove_list[f.Name]
-       and not ct_weapon_list[f.Name] and not shared_weapon_list[f.Name] then
-        build_skin_dropdown(f.Name)
-    end
+	if not ignore_items[f.Name] and not knife_list[f.Name] and not glove_list[f.Name]
+		and not ct_weapon_list[f.Name] and not shared_weapon_list[f.Name] then
+		build_weapon_dropdown(f.Name, WeaponBox)
+	end
 end
 
 cam.ChildAdded:Connect(function(o)
-    if not skins_enabled or not is_alive() then return end
-    task.wait(0.1); apply_skin_to_model(o)
+	if not skins_enabled or not is_alive() then return end
+	task.wait(0.1); apply_skin_to_model(o)
 end)
 task.spawn(function()
-    while task.wait(0.5) do
-        if skins_enabled and is_alive() then
-            for _, o in cam:GetChildren() do
-                if selected_skins[o.Name] and o:GetAttribute("SkinApplied") ~= selected_skins[o.Name] then
-                    apply_skin_to_model(o)
-                end
-            end
-        end
-    end
+	while task.wait(0.5) do
+		if skins_enabled and is_alive() then
+			for _, o in cam:GetChildren() do
+				if selected_skins[o.Name] and o:GetAttribute("SkinApplied") ~= selected_skins[o.Name] then
+					apply_skin_to_model(o)
+				end
+			end
+		end
+	end
 end)
 
--- ─── ESP ─────────────────────────────────────────────────────────────────────
-local ESP_ACCENT    = Color3.fromRGB(0, 200, 255)
-local esp_enabled   = false
-local show_box      = true
-local show_fill     = false
-local show_name     = true
-local show_hp       = true
-local show_hptext   = true
-local show_dist     = true
-local show_snap     = false
-local show_skeleton = false
-local esp_cache     = {}
+-- ─── UI SETTINGS ───────────────────────────────────────────────────────────
 
-local function nl(thick, col)
-    local l = Drawing.new("Line")
-    l.Thickness = thick or 1; l.Color = col or Color3.new(1,1,1)
-    l.Transparency = 1; l.Visible = false; return l
-end
-local function nt(sz, col, center)
-    local t = Drawing.new("Text")
-    t.Size = sz or 14; t.Color = col or Color3.new(1,1,1)
-    t.Outline = true; t.Center = center ~= false; t.Visible = false; return t
-end
+local MenuGroup = Tabs["UI Settings"]:AddLeftGroupbox("Menu", "wrench")
 
-local function ns(col, transp)
-    local s = Drawing.new("Square")
-    s.Filled = true; s.Color = col or Color3.new(0,0,0)
-    s.Transparency = transp or 0.5; s.Visible = false; return s
-end
-
-local function create_esp_set()
-    local e = {
-        -- corner bracket box (4 corners × 2 lines, no outlines)
-        tl_h=nl(2), tl_v=nl(2), tr_h=nl(2), tr_v=nl(2),
-        bl_h=nl(2), bl_v=nl(2), br_h=nl(2), br_v=nl(2),
-        -- health bar (bg track + 3 gradient segments + text)
-        hp_bg   = nl(4, Color3.fromRGB(10,10,10)),
-        hp_bar1 = nl(2.5, Color3.fromRGB(0,230,80)),
-        hp_bar2 = nl(2.5, Color3.fromRGB(255,220,50)),
-        hp_bar3 = nl(2.5, Color3.fromRGB(255,55,55)),
-        hp_txt  = nt(11, Color3.new(1,1,1), false),
-        -- subtle transparent box fill
-        box_fill = ns(Color3.fromRGB(0, 5, 10), 0.87),
-        -- name tag (background pill + text)
-        name_bg = ns(Color3.fromRGB(5,5,8), 0.35),
-        name    = nt(13, Color3.new(1,1,1), true),
-        -- distance label (background + text)
-        dist_bg = ns(Color3.fromRGB(5,5,8), 0.45),
-        dist    = nt(11, Color3.fromRGB(160,160,160), true),
-        -- tracer / snapline
-        snap_s = nl(2, blk),
-        snap   = nl(1, ESP_ACCENT),
-        -- skeleton (7 bones)
-        sk = {}
-    }
-    for i = 1, 7 do
-        e.sk[i] = nl(1, Color3.fromRGB(200,200,200))
-        e.sk[i].Transparency = 0.55
-    end
-    return e
-end
-
-local function hp_gradient(p)
-    p = math.clamp(p, 0, 1)
-    if p > 0.5 then return Color3.new((1-p)*2, 1, 0)
-    else return Color3.new(1, p*2, 0) end
-end
-
-local CK = { "tl_h","tl_v","tr_h","tr_v","bl_h","bl_v","br_h","br_v" }
-local function draw_corners(e, bx, by, bw, bh, col)
-    local cx, cy = bw * 0.25, bh * 0.20
-    e.tl_h.From=Vector2.new(bx,by);       e.tl_h.To=Vector2.new(bx+cx,by);       e.tl_h.Color=col
-    e.tl_v.From=Vector2.new(bx,by);       e.tl_v.To=Vector2.new(bx,by+cy);       e.tl_v.Color=col
-    e.tr_h.From=Vector2.new(bx+bw,by);    e.tr_h.To=Vector2.new(bx+bw-cx,by);    e.tr_h.Color=col
-    e.tr_v.From=Vector2.new(bx+bw,by);    e.tr_v.To=Vector2.new(bx+bw,by+cy);    e.tr_v.Color=col
-    e.bl_h.From=Vector2.new(bx,by+bh);    e.bl_h.To=Vector2.new(bx+cx,by+bh);    e.bl_h.Color=col
-    e.bl_v.From=Vector2.new(bx,by+bh);    e.bl_v.To=Vector2.new(bx,by+bh-cy);    e.bl_v.Color=col
-    e.br_h.From=Vector2.new(bx+bw,by+bh); e.br_h.To=Vector2.new(bx+bw-cx,by+bh); e.br_h.Color=col
-    e.br_v.From=Vector2.new(bx+bw,by+bh); e.br_v.To=Vector2.new(bx+bw,by+bh-cy); e.br_v.Color=col
-    for _,k in ipairs(CK) do e[k].Visible = true end
-end
-local function hide_corners(e) for _,k in ipairs(CK) do e[k].Visible = false end end
-
-local function hide_all(e)
-    for k,v in pairs(e) do
-        if k=="sk" then for _,l in ipairs(v) do l.Visible=false end
-        elseif type(v)=="userdata" then v.Visible=false end
-    end
-end
-local function remove_esp(e)
-    for k,v in pairs(e) do
-        if k=="sk" then for _,l in ipairs(v) do l:Remove() end
-        elseif type(v)=="userdata" then pcall(function() v:Remove() end) end
-    end
-end
-
-runservice.RenderStepped:Connect(function()
-    if not esp_enabled or not is_alive() then
-        for _,e in pairs(esp_cache) do hide_all(e) end; return
-    end
-    local ef = get_enemy()
-    if not ef then for _,e in pairs(esp_cache) do hide_all(e) end; return end
-    local vp   = cam.ViewportSize
-    local sbot = Vector2.new(vp.X/2, vp.Y)
-    local alive_now = {}
-
-    for _, v in ipairs(ef:GetChildren()) do
-        local hum  = v:FindFirstChildOfClass("Humanoid")
-        local root = v:FindFirstChild("HumanoidRootPart")
-        local hd   = v:FindFirstChild("Head")
-        if hum and hum.Health > 0 and root and hd then
-            alive_now[v] = true
-            if not esp_cache[v] then esp_cache[v] = create_esp_set() end
-            local e = esp_cache[v]
-
-            local rp,  vis = cam:WorldToViewportPoint(root.Position)
-            local top_p    = cam:WorldToViewportPoint(hd.Position   + Vector3.new(0, 0.7, 0))
-            local bot_p    = cam:WorldToViewportPoint(root.Position  - Vector3.new(0, 3.1, 0))
-
-            if vis then
-                local bh   = math.round(math.abs(top_p.Y - bot_p.Y))
-                local bw   = math.round(bh * 0.55)
-                local bx   = math.round(rp.X - bw * 0.5)
-                local by   = math.round(top_p.Y)
-                local hpp  = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
-                local hcol = hp_gradient(hpp)
-                local dst  = math.floor((cam.CFrame.Position - root.Position).Magnitude)
-                local bcol = (hpp < 0.3) and Color3.fromRGB(255,55,55) or ESP_ACCENT
-
-                -- Box fill + corners
-                if show_box then
-                    if show_fill then
-                        e.box_fill.Size     = Vector2.new(bw, bh)
-                        e.box_fill.Position = Vector2.new(bx, by)
-                        e.box_fill.Visible  = true
-                    else
-                        e.box_fill.Visible = false
-                    end
-                    draw_corners(e, bx, by, bw, bh, bcol)
-                else
-                    e.box_fill.Visible = false
-                    hide_corners(e)
-                end
-
-                -- Health bar (3-segment gradient: green → yellow → red)
-                if show_hp then
-                    local hbx  = bx - 6
-                    local hbot = by + bh
-                    local hmid = hbot - bh * hpp
-                    -- background track
-                    e.hp_bg.From = Vector2.new(hbx, by-1); e.hp_bg.To = Vector2.new(hbx, hbot+1); e.hp_bg.Visible = true
-                    -- green segment (top third of bar = high hp)
-                    local seg_top    = math.max(hmid, hbot - bh * 1.0)
-                    local seg_yellow = hbot - bh * 0.5
-                    local seg_red    = hbot - bh * 0.25
-                    if hpp > 0.5 then
-                        e.hp_bar1.From = Vector2.new(hbx, seg_yellow); e.hp_bar1.To = Vector2.new(hbx, hmid);    e.hp_bar1.Visible = true
-                        e.hp_bar2.From = Vector2.new(hbx, hbot);       e.hp_bar2.To = Vector2.new(hbx, seg_yellow); e.hp_bar2.Visible = true
-                        e.hp_bar3.Visible = false
-                    elseif hpp > 0.25 then
-                        e.hp_bar1.Visible = false
-                        e.hp_bar2.From = Vector2.new(hbx, seg_red); e.hp_bar2.To = Vector2.new(hbx, hmid);  e.hp_bar2.Visible = true
-                        e.hp_bar3.From = Vector2.new(hbx, hbot);    e.hp_bar3.To = Vector2.new(hbx, seg_red); e.hp_bar3.Visible = true
-                    else
-                        e.hp_bar1.Visible = false; e.hp_bar2.Visible = false
-                        e.hp_bar3.From = Vector2.new(hbx, hbot); e.hp_bar3.To = Vector2.new(hbx, hmid); e.hp_bar3.Visible = true
-                    end
-                    if show_hptext then
-                        e.hp_txt.Text     = tostring(math.floor(hum.Health))
-                        e.hp_txt.Position = Vector2.new(hbx - 4, hmid - 6)
-                        e.hp_txt.Color    = hcol
-                        e.hp_txt.Visible  = true
-                    else
-                        e.hp_txt.Visible = false
-                    end
-                else
-                    e.hp_bg.Visible=false; e.hp_bar1.Visible=false; e.hp_bar2.Visible=false; e.hp_bar3.Visible=false; e.hp_txt.Visible=false
-                end
-
-                -- Name (with dark pill background)
-                if show_name then
-                    local npad = 4
-                    local ntw  = #v.Name * 7
-                    e.name_bg.Size     = Vector2.new(ntw + npad*2, 16)
-                    e.name_bg.Position = Vector2.new(rp.X - ntw/2 - npad, by - 20)
-                    e.name_bg.Visible  = true
-                    e.name.Text = v.Name; e.name.Position = Vector2.new(rp.X, by - 20); e.name.Visible = true
-                else
-                    e.name_bg.Visible = false; e.name.Visible = false
-                end
-
-                -- Distance (with dark pill background)
-                if show_dist then
-                    local dtxt = dst .. "m"
-                    local dtw  = #dtxt * 6
-                    local dpad = 3
-                    local dc   = dst<40 and Color3.fromRGB(255,220,60)
-                             or dst<100 and Color3.fromRGB(200,200,200)
-                             or Color3.fromRGB(130,130,130)
-                    e.dist_bg.Size     = Vector2.new(dtw + dpad*2, 14)
-                    e.dist_bg.Position = Vector2.new(rp.X - dtw/2 - dpad, by + bh + 3)
-                    e.dist_bg.Visible  = true
-                    e.dist.Text = dtxt; e.dist.Color = dc
-                    e.dist.Position = Vector2.new(rp.X, by + bh + 4); e.dist.Visible = true
-                else
-                    e.dist_bg.Visible = false; e.dist.Visible = false
-                end
-
-                -- Tracer
-                if show_snap then
-                    local f2d = Vector2.new(bot_p.X, bot_p.Y)
-                    e.snap_s.From = sbot+Vector2.new(1,1); e.snap_s.To = f2d+Vector2.new(1,1); e.snap_s.Visible=true
-                    e.snap.From   = sbot;                  e.snap.To   = f2d
-                    e.snap.Color  = bcol;                  e.snap.Visible = true
-                else e.snap.Visible=false; e.snap_s.Visible=false end
-
-                -- Skeleton
-                if show_skeleton then
-                    local function g2d(pn)
-                        local p = v:FindFirstChild(pn); if not p then return nil end
-                        local s2, sv = cam:WorldToViewportPoint(p.Position)
-                        return sv and Vector2.new(s2.X, s2.Y) or nil
-                    end
-                    local tor = g2d("UpperTorso") or g2d("Torso")
-                    local low = g2d("LowerTorso") or tor
-                    local lsh = g2d("Left Upper Arm")  or g2d("Left Arm")
-                    local rsh = g2d("Right Upper Arm") or g2d("Right Arm")
-                    local lel = g2d("Left Lower Arm")  or lsh
-                    local rel = g2d("Right Lower Arm") or rsh
-                    local bones = {
-                        {g2d("Head"), tor}, {tor, low},
-                        {tor, lsh}, {tor, rsh},
-                        {lsh, lel}, {rsh, rel},
-                        {low, g2d("HumanoidRootPart")},
-                    }
-                    for i, bone in ipairs(bones) do
-                        if bone[1] and bone[2] then
-                            e.sk[i].From=bone[1]; e.sk[i].To=bone[2]; e.sk[i].Visible=true
-                        elseif e.sk[i] then e.sk[i].Visible=false end
-                    end
-                else
-                    for _,l in ipairs(e.sk) do l.Visible=false end
-                end
-            else
-                hide_all(e)
-            end
-        end
-    end
-
-    for k, e in pairs(esp_cache) do
-        if not alive_now[k] then remove_esp(e); esp_cache[k]=nil end
-    end
-end)
-
--- ESP Groupbox (Visuals tab)
-espbox:AddToggle('esp', { Text = 'ESP', Default = false, Tooltip = 'Master toggle — enables all ESP elements' }):OnChanged(function() esp_enabled = toggles.esp.Value end)
-espbox:AddDivider()
-espbox:AddLabel("  Overlays")
-espbox:AddToggle('esp_b',  { Text = 'Box',       Default = true,  Tooltip = 'Corner bracket box drawn around each enemy' }):OnChanged(function() show_box      = toggles.esp_b.Value  end)
-espbox:AddToggle('esp_f',  { Text = 'Fill Box',  Default = false, Tooltip = 'Semi-transparent fill inside the corner box' }):OnChanged(function() show_fill     = toggles.esp_f.Value  end)
-espbox:AddToggle('esp_h',  { Text = 'HP Bar',    Default = true,  Tooltip = 'Gradient bar: green → yellow → red by HP' }):OnChanged(function() show_hp       = toggles.esp_h.Value  end)
-espbox:AddToggle('esp_ht', { Text = 'HP Number', Default = true,  Tooltip = 'Shows exact health value beside the bar' }):OnChanged(function() show_hptext   = toggles.esp_ht.Value end)
-espbox:AddToggle('esp_n',  { Text = 'Name',      Default = true,  Tooltip = 'Draws enemy username above the box' }):OnChanged(function() show_name     = toggles.esp_n.Value  end)
-espbox:AddToggle('esp_d',  { Text = 'Distance',  Default = true,  Tooltip = 'Studs distance shown below the box' }):OnChanged(function() show_dist     = toggles.esp_d.Value  end)
-espbox:AddDivider()
-espbox:AddLabel("  Extras")
-espbox:AddToggle('esp_sn', { Text = 'Tracer',    Default = false, Tooltip = 'Snap line from screen bottom to enemy feet' }):OnChanged(function() show_snap     = toggles.esp_sn.Value end)
-espbox:AddToggle('esp_sk', { Text = 'Skeleton',  Default = false, Tooltip = 'Draws bone connections on each enemy' }):OnChanged(function() show_skeleton = toggles.esp_sk.Value end)
-
--- ─── MISC VISUALS (rechte Groupbox im Visuals Tab) ───────────────────────────
-local antiflash, antismoke = false, false
-miscbox:AddLabel("  Effects")
-miscbox:AddToggle('af', { Text = 'No Flash', Default = false, Tooltip = 'Blocks flashbang blindness' }):OnChanged(function() antiflash = toggles.af.Value end)
-miscbox:AddToggle('as', { Text = 'No Smoke', Default = false, Tooltip = 'Removes smoke grenade clouds from the map' }):OnChanged(function() antismoke = toggles.as.Value end)
-miscbox:AddDivider()
-
-task.spawn(function()
-    while task.wait(0.2) do
-        if antiflash then
-            local gui    = plr.PlayerGui:FindFirstChild("FlashbangEffect")
-            local effect = game:GetService("Lighting"):FindFirstChild("FlashbangColorCorrection")
-            if gui then gui:Destroy() end
-            if effect then effect:Destroy() end
-        end
-    end
-end)
-
-task.spawn(function()
-    while task.wait(0.5) do
-        if antismoke then
-            local debris = workspace_svc:FindFirstChild("Debris")
-            if debris then
-                for _, folder in ipairs(debris:GetChildren()) do
-                    if string.match(folder.Name, "Voxel") then folder:ClearAllChildren(); folder:Destroy() end
-                end
-            end
-        end
-    end
-end)
-
--- Anti-Aim
-local antiaim_enabled = false
-local antiaim_mode = "Spin"
-local antiaim_angle = 0
-local antiaim_spin_speed = 10
-
-miscbox:AddLabel("  Anti-Aim")
-miscbox:AddToggle('aa',     { Text = 'Enable',     Default = false, Tooltip = 'Randomizes body rotation to confuse enemies' }):OnChanged(function() antiaim_enabled = toggles.aa.Value end)
-miscbox:AddDropdown('aa_mode', { Text = 'Mode',    Values = {"Spin","Jitter","Down","Up"}, Default = "Spin", Tooltip = 'Which anti-aim style to apply' }):OnChanged(function() antiaim_mode = options.aa_mode.Value end)
-miscbox:AddSlider('aa_spd', { Text = 'Spin Speed', Default = 10, Min = 1, Max = 30, Rounding = 0, Tooltip = 'Degrees per tick for Spin mode' }):OnChanged(function() antiaim_spin_speed = options.aa_spd.Value end)
-miscbox:AddDivider()
-
-local aa_conn = nil
-local function get_neck_joint()
-    local char = plr.Character; if not char then return end
-    local upper = char:FindFirstChild("UpperTorso")
-    if upper then local n = upper:FindFirstChild("Neck"); if n then return n end end
-    local head = char:FindFirstChild("Head")
-    if head then local n = head:FindFirstChild("Neck"); if n then return n end end
-end
-local function start_antiaim()
-    if aa_conn then aa_conn:Disconnect(); aa_conn = nil end
-    aa_conn = runservice.Heartbeat:Connect(function()
-        if not antiaim_enabled or not is_alive() or not plr.Character then return end
-        local hrp        = plr.Character:FindFirstChild("HumanoidRootPart")
-        local root_joint = hrp and hrp:FindFirstChild("RootJoint")
-        if not root_joint then
-            local lower = plr.Character:FindFirstChild("LowerTorso")
-            root_joint  = lower and lower:FindFirstChild("Root")
-        end
-        if antiaim_mode == "Spin" then
-            if not root_joint then return end
-            antiaim_angle = (antiaim_angle + antiaim_spin_speed) % 360
-            root_joint.C0 = CFrame.new(0, -1, 0) * CFrame.Angles(0, math.rad(antiaim_angle), 0)
-        elseif antiaim_mode == "Jitter" then
-            if not root_joint then return end
-            root_joint.C0 = CFrame.new(0, -1, 0) * CFrame.Angles(0, math.rad(180), 0)
-        elseif antiaim_mode == "Down" then
-            local neck = get_neck_joint()
-            if neck then neck.C0 = CFrame.new(0, 1, 0) * CFrame.Angles(math.rad(-89), 0, 0) end
-        elseif antiaim_mode == "Up" then
-            local neck = get_neck_joint()
-            if neck then neck.C0 = CFrame.new(0, 1, 0) * CFrame.Angles(math.rad(89), 0, 0) end
-        end
-    end)
-end
-start_antiaim()
-
--- Third Person
-local thirdperson_enabled = false
-local tp_distance = 10
-local current_fov = 70
-
-local function set_char_visible(visible)
-    local char = plr.Character; if not char then return end
-    for _, part in pairs(char:GetDescendants()) do
-        if part:IsA("BasePart") or part:IsA("Decal") then
-            part.LocalTransparencyModifier = visible and 0 or 1
-        end
-    end
-end
-local function hide_viewmodel()
-    for _, obj in pairs(cam:GetChildren()) do
-        if obj:IsA("Model") then
-            for _, part in pairs(obj:GetDescendants()) do
-                if part:IsA("BasePart") or part:IsA("MeshPart") or part:IsA("SpecialMesh") then
-                    part.LocalTransparencyModifier = 1
-                end
-            end
-        end
-    end
-end
-local function set_thirdperson(state)
-    local char = plr.Character; if not char then return end
-    local hum  = char:FindFirstChildOfClass("Humanoid")
-    if state then
-        if hum then hum.CameraOffset = Vector3.new(0, 2.5, tp_distance) end
-        set_char_visible(true); cam.FieldOfView = 70
-    else
-        if hum then hum.CameraOffset = Vector3.new(0, 0, 0) end
-        set_char_visible(false); cam.FieldOfView = current_fov
-    end
-end
-
-runservice.RenderStepped:Connect(function()
-    if thirdperson_enabled and plr.Character then set_char_visible(true); hide_viewmodel() end
-end)
-
-miscbox:AddLabel("  Camera")
-miscbox:AddToggle('tp', { Text = '3rd Person', Default = false, Tooltip = 'Switches to a third-person camera view' }):OnChanged(function()
-    thirdperson_enabled = toggles.tp.Value
-    set_thirdperson(thirdperson_enabled)
-end)
-miscbox:AddSlider('tp_dist', { Text = 'Camera Distance', Default = 10, Min = 3, Max = 30, Rounding = 0, Tooltip = 'How far behind your character the camera sits' }):OnChanged(function()
-    tp_distance = options.tp_dist.Value
-    if thirdperson_enabled and plr.Character then
-        local hum = plr.Character:FindFirstChildOfClass("Humanoid")
-        if hum then hum.CameraOffset = Vector3.new(0, 0, tp_distance) end
-    end
-end)
-miscbox:AddDivider()
-
-plr.CharacterAdded:Connect(function()
-    task.wait(0.5)
-    if thirdperson_enabled then set_thirdperson(true) end
-end)
-
--- Stretched res
-local stretch_enabled = false
-local stretch_res = 0.80
-
-miscbox:AddLabel("  Resolution")
-miscbox:AddToggle('stretch', { Text = 'Stretched Res', Default = false, Tooltip = 'Vertically squishes the camera projection' }):OnChanged(function()
-    stretch_enabled = toggles.stretch.Value
-    if not stretch_enabled then
-        cam.CFrame = cam.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1)
-    end
-end)
-miscbox:AddSlider('stretch_r', { Text = 'Amount', Default = 80, Min = 50, Max = 99, Rounding = 0, Tooltip = 'Lower = more squished (80 = default)' }):OnChanged(function()
-    stretch_res = options.stretch_r.Value / 100
-end)
-miscbox:AddDivider()
-
-runservice.RenderStepped:Connect(function()
-    if stretch_enabled then
-        cam.CFrame = cam.CFrame * CFrame.new(0, 0, 0, 1, 0, 0, 0, stretch_res, 0, 0, 0, 1)
-    end
-end)
-
--- Motion Blur
-local motionblur_enabled = false
-local blur_amount    = 15
-local blur_amplifier = 5
-local motion_blur_fx = nil
-local last_look      = cam.CFrame.LookVector
-
-miscbox:AddLabel("  Motion Blur")
-miscbox:AddToggle('mb', { Text = 'Enable', Default = false, Tooltip = 'Adds a blur effect based on camera movement' }):OnChanged(function()
-    motionblur_enabled = toggles.mb.Value
-    if not motionblur_enabled and motion_blur_fx then motion_blur_fx.Size = 0 end
-end)
-miscbox:AddSlider('mb_amt', { Text = 'Strength',  Default = 15, Min = 1, Max = 45, Rounding = 0, Tooltip = 'How strong the blur effect is' }):OnChanged(function()
-    blur_amount = options.mb_amt.Value
-end)
-miscbox:AddSlider('mb_amp', { Text = 'Amplifier', Default = 5,  Min = 1, Max = 15, Rounding = 0, Tooltip = 'Multiplier for sensitivity to camera movement' }):OnChanged(function()
-    blur_amplifier = options.mb_amp.Value
-end)
-
-motion_blur_fx = Instance.new("BlurEffect")
-motion_blur_fx.Size   = 0
-motion_blur_fx.Parent = cam
-
-workspace_svc.Changed:Connect(function(prop)
-    if prop == "CurrentCamera" then
-        local new_cam = workspace_svc.CurrentCamera
-        if motion_blur_fx and motion_blur_fx.Parent then
-            motion_blur_fx.Parent = new_cam
-        else
-            motion_blur_fx = Instance.new("BlurEffect")
-            motion_blur_fx.Size   = 0
-            motion_blur_fx.Parent = new_cam
-        end
-    end
-end)
-
-runservice.Heartbeat:Connect(function()
-    if not motion_blur_fx or not motion_blur_fx.Parent then
-        motion_blur_fx = Instance.new("BlurEffect")
-        motion_blur_fx.Size   = 0
-        motion_blur_fx.Parent = cam
-    end
-    if motionblur_enabled then
-        local mag = (cam.CFrame.LookVector - last_look).Magnitude
-        motion_blur_fx.Size = math.abs(mag) * blur_amount * blur_amplifier / 2
-    else
-        motion_blur_fx.Size = 0
-    end
-    last_look = cam.CFrame.LookVector
-end)
-
--- ─── FPS COUNTER ─────────────────────────────────────────────────────────────
-local fps_enabled  = true
-local fps_position = "Top Left"
-local fps_val      = 0
-local fps_frames   = 0
-local fps_timer    = 0
-
-local fps_draw = Drawing.new("Text")
-fps_draw.Size         = 15
-fps_draw.Color        = Color3.fromRGB(0, 200, 255)
-fps_draw.Outline      = true
-fps_draw.OutlineColor = Color3.new(0, 0, 0)
-fps_draw.Font         = Drawing.Fonts.Monospace
-fps_draw.Visible      = false
-
-local FPS_PADDING = 8
-local function fps_anchor()
-    local vp = cam.ViewportSize
-    if fps_position == "Top Left"     then return Vector2.new(FPS_PADDING, FPS_PADDING) end
-    if fps_position == "Top Right"    then fps_draw.Center = false; return Vector2.new(vp.X - 80, FPS_PADDING) end
-    if fps_position == "Bottom Left"  then return Vector2.new(FPS_PADDING, vp.Y - 24) end
-    if fps_position == "Bottom Right" then return Vector2.new(vp.X - 80, vp.Y - 24) end
-    return Vector2.new(FPS_PADDING, FPS_PADDING)
-end
-
-runservice.RenderStepped:Connect(function(dt)
-    fps_frames = fps_frames + 1
-    fps_timer  = fps_timer  + dt
-    if fps_timer >= 0.5 then
-        fps_val    = math.floor(fps_frames / fps_timer)
-        fps_frames = 0; fps_timer = 0
-    end
-    if fps_enabled then
-        local col
-        if fps_val >= 100 then col = Color3.fromRGB(0, 230, 80)
-        elseif fps_val >= 60 then col = Color3.fromRGB(255, 220, 50)
-        else col = Color3.fromRGB(255, 60, 60) end
-        fps_draw.Text     = "FPS  " .. tostring(fps_val)
-        fps_draw.Color    = col
-        fps_draw.Position = fps_anchor()
-        fps_draw.Visible  = true
-    else
-        fps_draw.Visible = false
-    end
-end)
-
-fpsbox:AddLabel("  FPS Counter")
-fpsbox:AddToggle('fps_on', { Text = 'Enable', Default = true, Tooltip = 'Shows FPS colored green/yellow/red by performance' }):OnChanged(function()
-    fps_enabled = toggles.fps_on.Value
-end)
-fpsbox:AddDropdown('fps_pos', {
-    Text    = 'Position',
-    Values  = {"Top Left", "Top Right", "Bottom Left", "Bottom Right"},
-    Default = "Top Left",
-    Tooltip = 'Which corner of the screen to draw the FPS counter in',
-}):OnChanged(function()
-    fps_position = options.fps_pos.Value
-end)
-
--- ─── WATERMARK (UIGradient, oben rechts) ─────────────────────────────────────
-local wm_enabled = true
-
-local wm_gui = Instance.new("ScreenGui")
-wm_gui.Name           = "XeioaWatermark"
-wm_gui.ResetOnSpawn   = false
-wm_gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-wm_gui.Enabled        = true
-wm_gui.Parent         = plr:WaitForChild("PlayerGui")
-
--- Outer frame (top-right, 10px margin)
-local wm_frame = Instance.new("Frame")
-wm_frame.Size                  = UDim2.new(0, 148, 0, 40)
-wm_frame.Position              = UDim2.new(1, -158, 0, 10)
-wm_frame.BackgroundColor3      = Color3.fromRGB(8, 8, 12)
-wm_frame.BackgroundTransparency = 0
-wm_frame.BorderSizePixel       = 0
-wm_frame.Parent                = wm_gui
-
-local wm_corner = Instance.new("UICorner")
-wm_corner.CornerRadius = UDim.new(0, 7)
-wm_corner.Parent       = wm_frame
-
--- Background gradient (dark → slightly lighter at top)
-local wm_bg_grad = Instance.new("UIGradient")
-wm_bg_grad.Color    = ColorSequence.new({
-    ColorSequenceKeypoint.new(0,   Color3.fromRGB(20, 20, 30)),
-    ColorSequenceKeypoint.new(1,   Color3.fromRGB(6,  6,  10)),
+MenuGroup:AddToggle("KeybindMenuOpen", {
+	Default  = Library.KeybindFrame.Visible,
+	Text     = "Open Keybind Menu",
+	Callback = function(value) Library.KeybindFrame.Visible = value end,
 })
-wm_bg_grad.Rotation = 90
-wm_bg_grad.Parent   = wm_frame
-
--- Thin border glow using a stroke
-local wm_stroke = Instance.new("UIStroke")
-wm_stroke.Color       = Color3.fromRGB(0, 200, 255)
-wm_stroke.Thickness   = 1
-wm_stroke.Transparency = 0.72
-wm_stroke.Parent      = wm_frame
-
--- Bottom accent bar (gradient cyan → purple → cyan)
-local wm_bar = Instance.new("Frame")
-wm_bar.Size                   = UDim2.new(1, -14, 0, 2)
-wm_bar.Position               = UDim2.new(0, 7, 1, -3)
-wm_bar.BackgroundColor3       = Color3.fromRGB(0, 200, 255)
-wm_bar.BorderSizePixel        = 0
-wm_bar.Parent                 = wm_frame
-
-local wm_bar_corner = Instance.new("UICorner")
-wm_bar_corner.CornerRadius = UDim.new(1, 0)
-wm_bar_corner.Parent       = wm_bar
-
-local wm_bar_grad = Instance.new("UIGradient")
-wm_bar_grad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0,    Color3.fromRGB(0,   200, 255)),
-    ColorSequenceKeypoint.new(0.5,  Color3.fromRGB(160,  60, 255)),
-    ColorSequenceKeypoint.new(1,    Color3.fromRGB(0,   200, 255)),
+MenuGroup:AddToggle("ShowCustomCursor", {
+	Text     = "Custom Cursor",
+	Default  = true,
+	Callback = function(Value) Library.ShowCustomCursor = Value end,
 })
-wm_bar_grad.Parent = wm_bar
-
--- Title label "Xeioa"
-local wm_title = Instance.new("TextLabel")
-wm_title.Size                 = UDim2.new(1, -10, 0, 20)
-wm_title.Position             = UDim2.new(0, 10, 0, 2)
-wm_title.BackgroundTransparency = 1
-wm_title.Text                 = "Xeioa"
-wm_title.TextColor3           = Color3.new(1, 1, 1)
-wm_title.Font                 = Enum.Font.GothamBold
-wm_title.TextSize             = 14
-wm_title.TextXAlignment       = Enum.TextXAlignment.Left
-wm_title.Parent               = wm_frame
-
--- Gradient on title text (cyan glow)
-local wm_title_grad = Instance.new("UIGradient")
-wm_title_grad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0,   Color3.new(1, 1, 1)),
-    ColorSequenceKeypoint.new(0.6, Color3.new(1, 1, 1)),
-    ColorSequenceKeypoint.new(1,   Color3.fromRGB(0, 200, 255)),
+MenuGroup:AddDropdown("NotificationSide", {
+	Values   = {"Left", "Right"},
+	Default  = "Right",
+	Text     = "Notification Side",
+	Callback = function(Value) Library:SetNotifySide(Value) end,
 })
-wm_title_grad.Parent = wm_title
+MenuGroup:AddDropdown("DPIDropdown", {
+	Values   = {"50%","75%","100%","125%","150%","175%","200%"},
+	Default  = "100%",
+	Text     = "DPI Scale",
+	Callback = function(Value)
+		Value = Value:gsub("%%", "")
+		Library:SetDPIScale(tonumber(Value))
+	end,
+})
+MenuGroup:AddSlider("UICornerSlider", {
+	Text     = "Corner Radius",
+	Default  = Library.CornerRadius,
+	Min      = 0,
+	Max      = 20,
+	Rounding = 0,
+	Callback = function(value) Window:SetCornerRadius(value) end,
+})
+MenuGroup:AddDivider()
+MenuGroup:AddLabel("Menu Keybind"):AddKeyPicker("MenuKeybind", {
+	Default = "RightShift",
+	NoUI    = true,
+	Text    = "Menu Keybind",
+})
+MenuGroup:AddButton({
+	Text = "Unload",
+	Func = function() Library:Unload() end,
+	DoubleClick = false,
+})
 
--- Sub label "fps | ping"
-local wm_sub_label = Instance.new("TextLabel")
-wm_sub_label.Size                 = UDim2.new(1, -10, 0, 16)
-wm_sub_label.Position             = UDim2.new(0, 10, 0, 19)
-wm_sub_label.BackgroundTransparency = 1
-wm_sub_label.TextColor3           = Color3.fromRGB(100, 180, 220)
-wm_sub_label.Font                 = Enum.Font.Code
-wm_sub_label.TextSize             = 11
-wm_sub_label.TextXAlignment       = Enum.TextXAlignment.Left
-wm_sub_label.Parent               = wm_frame
+Library.ToggleKeybind = Options.MenuKeybind
 
--- Update sub label every frame
-runservice.RenderStepped:Connect(function()
-    if not wm_enabled then return end
-    local ping = math.floor(players.LocalPlayer:GetNetworkPing() * 1000)
-    wm_sub_label.Text = tostring(fps_val) .. " fps   " .. tostring(ping) .. " ms"
-end)
-
-uibox:AddLabel("  HUD")
-uibox:AddToggle('wm_on', { Text = 'Watermark', Default = true, Tooltip = 'Shows the Xeioa watermark in the top-right corner' }):OnChanged(function()
-    wm_enabled        = toggles.wm_on.Value
-    wm_gui.Enabled    = wm_enabled
-end)
-uibox:AddDivider()
-uibox:AddLabel("  ESP Accent")
-uibox:AddColorPicker('esp_col', {
-    Default = Color3.fromRGB(0, 200, 255),
-    Title   = 'ESP Accent Color',
-    Tooltip = 'Accent color for ESP boxes, tracers and glow',
-}):OnChanged(function()
-    ESP_ACCENT = options.esp_col.Value
-end)
-
--- ─── CROSSHAIR ───────────────────────────────────────────────────────────────
-local ch_enabled = false
-local ch_size    = 8
-local ch_gap     = 4
-local ch_thick   = 1.5
-local ch_color   = Color3.fromRGB(0, 200, 255)
-local ch_dot     = false
-
-local CH_LINES = {}
-for i = 1, 4 do
-    local l = Drawing.new("Line")
-    l.Thickness = ch_thick; l.Color = ch_color; l.Visible = false
-    CH_LINES[i] = l
-end
-local ch_dot_draw = Drawing.new("Circle")
-ch_dot_draw.Radius = 2; ch_dot_draw.Color = ch_color; ch_dot_draw.Filled = true; ch_dot_draw.Visible = false
-
-local CH_SHADOW = {}
-for i = 1, 4 do
-    local l = Drawing.new("Line")
-    l.Thickness = ch_thick + 1.5; l.Color = Color3.new(0,0,0); l.Visible = false
-    CH_SHADOW[i] = l
-end
-local ch_dot_shadow = Drawing.new("Circle")
-ch_dot_shadow.Radius = 3; ch_dot_shadow.Color = Color3.new(0,0,0); ch_dot_shadow.Filled = true; ch_dot_shadow.Visible = false
-
-runservice.RenderStepped:Connect(function()
-    if not ch_enabled then
-        for i = 1, 4 do CH_LINES[i].Visible = false; CH_SHADOW[i].Visible = false end
-        ch_dot_draw.Visible = false; ch_dot_shadow.Visible = false; return
-    end
-    local c = get_screen_center()
-    local s, g = ch_size, ch_gap
-    local dirs = {
-        { Vector2.new(-s-g, 0), Vector2.new(-g, 0) },
-        { Vector2.new( s+g, 0), Vector2.new( g, 0) },
-        { Vector2.new(0, -s-g), Vector2.new(0, -g) },
-        { Vector2.new(0,  s+g), Vector2.new(0,  g) },
-    }
-    for i, d in ipairs(dirs) do
-        CH_SHADOW[i].From = c+d[1]; CH_SHADOW[i].To = c+d[2]; CH_SHADOW[i].Color = Color3.new(0,0,0); CH_SHADOW[i].Visible = true
-        CH_LINES[i].From  = c+d[1]; CH_LINES[i].To  = c+d[2]; CH_LINES[i].Color  = ch_color;           CH_LINES[i].Visible  = true
-    end
-    if ch_dot then
-        ch_dot_shadow.Position = c; ch_dot_shadow.Visible = true
-        ch_dot_draw.Position   = c; ch_dot_draw.Color = ch_color; ch_dot_draw.Visible = true
-    else
-        ch_dot_shadow.Visible = false; ch_dot_draw.Visible = false
-    end
-end)
-
-chbox:AddLabel("  Crosshair")
-chbox:AddToggle('ch_on',  { Text = 'Enable',     Default = false, Tooltip = 'Draws a custom crosshair at the center of screen' }):OnChanged(function() ch_enabled = toggles.ch_on.Value  end)
-chbox:AddToggle('ch_dot', { Text = 'Center Dot', Default = false, Tooltip = 'Adds a filled dot in the center of the crosshair' }):OnChanged(function() ch_dot     = toggles.ch_dot.Value end)
-chbox:AddDivider()
-chbox:AddSlider('ch_sz',  { Text = 'Size',       Default = 8,  Min = 2,  Max = 20, Rounding = 0, Tooltip = 'Length of each crosshair arm' }):OnChanged(function() ch_size  = options.ch_sz.Value end)
-chbox:AddSlider('ch_gp',  { Text = 'Gap',        Default = 4,  Min = 0,  Max = 12, Rounding = 0, Tooltip = 'Empty space between center and arms' }):OnChanged(function() ch_gap   = options.ch_gp.Value end)
-chbox:AddSlider('ch_th',  { Text = 'Thickness',  Default = 2,  Min = 1,  Max = 5,  Rounding = 0, Tooltip = 'Line thickness of the crosshair arms' }):OnChanged(function()
-    ch_thick = options.ch_th.Value
-    for i = 1, 4 do CH_LINES[i].Thickness = ch_thick end
-end)
-chbox:AddColorPicker('ch_col', {
-    Default = Color3.fromRGB(0, 200, 255),
-    Title   = 'Crosshair Color',
-    Tooltip = 'Color of the crosshair lines and dot',
-}):OnChanged(function()
-    ch_color = options.ch_col.Value
-end)
-
--- ─── UI SETTINGS TAB ─────────────────────────────────────────────────────────
-local themebox = tabs.uisettings:AddLeftGroupbox("theme", "palette")
-local configbox = tabs.uisettings:AddRightGroupbox("config", "save")
-
-ThemeManager:SetLibrary(library)
-SaveManager:SetLibrary(library)
-
-ThemeManager:SetFolder("Xeioa")
-SaveManager:SetFolder("Xeioa/configs")
-
-ThemeManager:ApplyToGroupbox(themebox)
-SaveManager:BuildConfigSection(configbox)
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({"MenuKeybind"})
+ThemeManager:SetFolder("BloxStrike")
+SaveManager:SetFolder("BloxStrike/configs")
+SaveManager:BuildConfigSection(Tabs["UI Settings"])
+ThemeManager:ApplyToTab(Tabs["UI Settings"])
+SaveManager:LoadAutoloadConfig()
